@@ -54,3 +54,21 @@ Next, we estimate the precision matrix using `precM`:
 precM <- precM(X)
 ```
 By default, `precM` estimates the precision matrix using glasso (the recommended approach in our paper).
+
+In this example, we assume the number of latent factors is known (`k = 2`), which is same as that of the number of latent factors used to generate the simulated data. Using `DrFARM.whole`:
+```
+k <- 2
+DrFARM.res <- DrFARM.whole(X, Y, Theta0, precM, k, 
+                           remMap.res$lambda1.opt, 
+                           remMap.res$lambda2.opt)
+Theta <- DrFARM.res$Theta;
+B <- DrFARM.res$B; 
+E.Z <- DrFARM.res$E.Z;
+```
+we obtain the estimated `q x p` sparse coefficient matrix `Theta`, `q x k` loading matrix `B` and `n x k` expected latent factors. These output are essential for the final step of calculating the entrywise *p*-values as well as the pleiotropic *p*-values.
+
+For statistical inference, the `q x p` entrywise (`pval1`) and length `p` pleiotropic (`pval2`) *p*-values can simply be obtained using:
+```
+pval1 <- entry.pvalue(X, Y, Theta, B, E.Z, precM)
+pval2 <- pleio.pvalue(X, Y, Theta, B, E.Z, precM)
+```
