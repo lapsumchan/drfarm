@@ -975,8 +975,7 @@ pleio.pvalue <- function(X, Y, Theta, B, E.Z, precM,
 
   pval <- 2 * pnorm(-abs(Z))
 
-  # T-type combination
-  T <- rowSums(tan(pi * (0.5 - pval))) / q
+  T <- rowSums(1 / tan(pi * pval)) / q
   pval2 <- 2 * pcauchy(-abs(T))
   return(pval2)
 }
