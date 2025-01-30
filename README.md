@@ -25,24 +25,30 @@ Installation should complete within a couple of minutes on a standard machine.
 
 # Demo
 
+Below is a toy example demonstrating the end-to-end workflow of DrFARM. For reproducibility, we use a small simulated dataset (`drfarm.dat`) included in the package.
+
 To get started, load the necessary packages:
 
 ```
+library(drfarm)
 library(glmnet)
 library(glasso)
 library(psych)
 ```
 
-**Note: To ensure consistency, a version of the simulated data (`drfarm.dat`) has been lazy-loaded within the `drfarm` package. Using this pre-loaded data ensures reproducibility across different systems.**
-
-`drfarm.dat` contains a small simulated toy example with sample size `n = 500`, `p = 10` variants and `q = 5` traits, with 3 pleiotropic variants (variant #3, #8 and #10): `X` (`n x p` variants matrix) and `Y` (`n x q` trait matrix), as well as the ground truth `p x q` coefficient matrix `Theta.t:
+The lazy-loaded `drfarm.dat` contains
+- `X`: a `n` x `p` matrix of predictors (or variants)
+- `Y`: a `n` x `q` matrix of outcomes (or traits)
+- `Theta.t`: a `p` x `q` matrix of true (simulated) coefficients
+where `n = 500`, `p = 10` and `q = 5`.
 
 ```
 X <- drfarm.dat$X
 Y <- drfarm.dat$Y
 Theta.t <- drfarm.dat$Theta.t
 ```
-where the true coefficients are
+
+You can inspect it directly:
 ```
 > t(Theta.t)
      [,1] [,2]      [,3] [,4] [,5] [,6] [,7]     [,8] [,9]     [,10]
@@ -52,6 +58,7 @@ where the true coefficients are
 [4,]    0    0 -1.654552    0    0    0    0 0.000000    0  4.947609
 [5,]    0    0  0.000000    0    0    0    0 1.166915    0  3.515037
 ```
+which shows there are 3 "pleiotropic variants" (variant #3, #8 and #10).
 
 We estimate the initial value `Theta0` using remMap<sup>[1]</sup>, which assumes standardization by default:
 ```
