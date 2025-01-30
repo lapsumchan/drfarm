@@ -74,7 +74,7 @@ Theta0
 [4,]    0    0 -0.103653563    0    0    0    0 0.00000000    0  0.2709923
 [5,]    0    0  0.000000000    0    0    0    0 0.04195427    0  0.1935116
 ```
-**Note: remMap estimates often differ from the true scale since it standardizes `X` and `Y` by default.**
+**Note: remMap estimates often differ from the true scale since it standardizes `X` and `Y` by default (likewise for DrFARM).**
 
 Next, we need to estimate the precision matrix for the design matrix `X`. By default, `precM` uses glasso, which our paper recommends for this purpose.
 ```
