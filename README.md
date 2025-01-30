@@ -40,7 +40,7 @@ The lazy-loaded `drfarm.dat` contains
 - `X`: a `n` x `p` matrix of predictors (or variants)
 - `Y`: a `n` x `q` matrix of outcomes (or traits)
 - `Theta.t`: a `p` x `q` matrix of true (simulated) coefficients
-where `n = 500`, `p = 10` and `q = 5`.
+where `n = 500`, `p = 10` and `q = 5`
 
 ```
 X <- drfarm.dat$X
