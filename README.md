@@ -60,10 +60,19 @@ You can inspect it directly:
 ```
 which shows there are 3 "pleiotropic variants" (variant #3, #8 and #10).
 
-We estimate the initial value `Theta0` using remMap<sup>[1]</sup>, which assumes standardization by default:
+To use DrFARM, we first obtain an initial sparse estimate (`Theta0`) using remMap<sup>[1]</sup>, which assumes standardization by default:
 ```
 remMap.res <- remMap.whole(X, Y)
 Theta0 <- remMap.res$Theta0
+
+Theta0
+> Theta0
+     [,1] [,2]         [,3] [,4] [,5] [,6] [,7]       [,8] [,9]      [,10]
+[1,]    0    0 -0.208809944    0    0    0    0 0.00000000    0 -0.1635109
+[2,]    0    0  0.110882820    0    0    0    0 0.00000000    0 -0.2878153
+[3,]    0    0  0.005000023    0    0    0    0 0.23695892    0  0.0000000
+[4,]    0    0 -0.103653563    0    0    0    0 0.00000000    0  0.2709923
+[5,]    0    0  0.000000000    0    0    0    0 0.04195427    0  0.1935116
 ```
 As a result, `Theta0` estimated by remMap is not all the same scale as the true coefficient matrix:
 ```
