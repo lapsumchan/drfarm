@@ -15,7 +15,7 @@ Before using `drfarm` package, users should have `R` version 4.3.0 or higher.
 
 ### Installation  
 
-First, install `camp` from GitHub using `devtools`:  
+First, install `drfarm` from GitHub using `devtools`:  
 
     # Install devtools if not already installed
     # install.packages("devtools") 
