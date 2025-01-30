@@ -32,3 +32,7 @@ library(glmnet)
 library(glasso)
 library(psych)
 ```
+
+**Note: To ensure consistency, a version of the simulated data (`drfarm.dat`) has been lazy-loaded within the `drfarm` package. Using this pre-loaded data ensures reproducibility across different systems.**
+
+`drfarm.dat` contains a small simulated toy example with sample size `n = 500`, `p = 10` variants and `q = 5` traits, with 3 pleiotropic variants (variant #3, #8 and #10): `X` (`n x p` variants matrix) and `Y` (`n x q` trait matrix), as well as the ground truth `p x q` coefficient matrix `Theta.t`. Notice that there are `k = 2` underlying latent factors that contribute to the 5 traits.
