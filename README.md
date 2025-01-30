@@ -74,24 +74,14 @@ Theta0
 [4,]    0    0 -0.103653563    0    0    0    0 0.00000000    0  0.2709923
 [5,]    0    0  0.000000000    0    0    0    0 0.04195427    0  0.1935116
 ```
-As a result, `Theta0` estimated by remMap is not all the same scale as the true coefficient matrix:
-```
-> Theta0
-     [,1] [,2]         [,3] [,4] [,5] [,6] [,7]       [,8] [,9]      [,10]
-[1,]    0    0 -0.208809944    0    0    0    0 0.00000000    0 -0.1635109
-[2,]    0    0  0.110882820    0    0    0    0 0.00000000    0 -0.2878153
-[3,]    0    0  0.005000023    0    0    0    0 0.23695892    0  0.0000000
-[4,]    0    0 -0.103653563    0    0    0    0 0.00000000    0  0.2709923
-[5,]    0    0  0.000000000    0    0    0    0 0.04195427    0  0.1935116
-```
+**Note: remMap estimates often differ from the true scale since it standardizes `X` and `Y` by default.**
 
-Next, we estimate the precision matrix using `precM`:
+Next, we need to estimate the precision matrix for the design matrix `X`. By default, `precM` uses glasso, which our paper recommends for this purpose.
 ```
 precM <- precM(X)
 ```
-and default, `precM` estimates the precision matrix using glasso (the recommended approach in our paper).
 
-In this example, we assume the number of latent factors is known (`k = 2`), which is same as that of the number of latent factors used to generate the simulated data. Using `DrFARM.whole`:
+With that, we have all the input needed for running DrFARM. We assume the number of latent factors (`k = 2`) is known, as used in generating the simulated data (For real data, you might determine `k` using exploratory graph analysis or other criteria).
 ```
 k <- 2
 DrFARM.res <- DrFARM.whole(X, Y, Theta0, precM, k, 
@@ -101,10 +91,10 @@ Theta <- DrFARM.res$Theta;
 B <- DrFARM.res$B; 
 E.Z <- DrFARM.res$E.Z;
 ```
-we obtain the estimated `q x p` sparse coefficient matrix `Theta`, `q x k` loading matrix `B` and `n x k` expected latent factors. These output are essential for the final step of calculating the entrywise *p*-values as well as the pleiotropic *p*-values.
 
-The estimated coefficient matrix is 
-Finally, the `q x p` entrywise (`pval1`) and length `p` pleiotropic (`pval2`) *p*-values can simply be obtained using:
+Once we have the `q` x `p` DrFARM coefficient matrix `Theta`, `q` x `k` loading matrix and `n` x `k` expected latent factors, we can compute:
+1. Entrywise *p*-values for each variant-trait pair
+2. Pleiotropy (group-level) *p*-values for each variant across all traits
 ```
 pval1 <- entry.pvalue(X, Y, Theta, B, E.Z, precM)
 pval2 <- pleio.pvalue(X, Y, Theta, B, E.Z, precM)
