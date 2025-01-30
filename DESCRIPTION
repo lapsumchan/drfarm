@@ -1,0 +1,41 @@
+Package: drfarm
+Type: Package
+Title: Implementation of debiased-regularized factor analysis regression model (DrFARM)
+Version: 0.1.0
+Date: 2025-01-30
+Authors@R: 
+    c(
+      person("Lap Sum", "Chan", 
+             email = "chan2429@umn.edu", 
+             role = c("aut", "cre")),
+      person("Gen", "Li", 
+             email = "ligen@umich.edu", 
+             role = "aut"),
+      person("Peter X.K.", "Song", 
+             email = "pxsong@umich.edu", 
+             role = "aut")
+    )
+Maintainer: Lap Sum Chan <chan2429@umn.edu>
+Description: 
+    This package implements DrFARM, a method initially developed for identifying 
+    pleiotropic variants in multi-outcome GWAS analysis but is also applicable 
+    for generic "master predictor"" identification when non-genetic data are used 
+    for the design matrix. A sparse group-lasso penalty is used to encourage 
+    master predictor (i.e., pleiotropic variant) identification. Instead of assuming 
+    independent errors as in typical multivariate (multi-outcome) regression, 
+    DrFARM imposes a factor analysis model on the residual, allowing a better 
+    fit. Entrywise p-values are obtained via outer-debiasing, and group-level 
+    p-values are obtained using a Cauchy combination test. This package 
+    supports initial value estimation via remMap, precision matrix estimation 
+    (needed for DrFARM), and statistical inference.
+Encoding: UTF-8
+LazyData: true
+License: GPL (>= 3)
+RoxygenNote: 7.3.1
+LinkingTo: 
+    Rcpp
+Imports: 
+    glasso,
+    glmnet,
+    psych,
+    Rcpp
