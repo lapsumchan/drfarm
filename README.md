@@ -42,13 +42,23 @@ X <- drfarm.dat$X
 Y <- drfarm.dat$Y
 Theta.t <- drfarm.dat$Theta.t
 ```
+where the true coefficients are
+```
+> t(Theta.t)
+     [,1] [,2]      [,3] [,4] [,5] [,6] [,7]     [,8] [,9]     [,10]
+[1,]    0    0 -4.383062    0    0    0    0 0.000000    0 -3.746484
+[2,]    0    0  1.556498    0    0    0    0 0.000000    0 -4.612953
+[3,]    0    0  0.000000    0    0    0    0 5.198627    0  0.000000
+[4,]    0    0 -1.654552    0    0    0    0 0.000000    0  4.947609
+[5,]    0    0  0.000000    0    0    0    0 1.166915    0  3.515037
+```
 
-We estimate the initial value `Theta0` using remMap<sup>[1]</sup>:
+We estimate the initial value `Theta0` using remMap<sup>[1]</sup>, which assumes standardization by default:
 ```
 remMap.res <- remMap.whole(X, Y)
 Theta0 <- remMap.res$Theta0
 ```
-which gives
+As a result, `Theta0` estimated by remMap is not all the same scale as the true coefficient matrix:
 ```
 > Theta0
      [,1] [,2]         [,3] [,4] [,5] [,6] [,7]       [,8] [,9]      [,10]
@@ -77,6 +87,7 @@ E.Z <- DrFARM.res$E.Z;
 ```
 we obtain the estimated `q x p` sparse coefficient matrix `Theta`, `q x k` loading matrix `B` and `n x k` expected latent factors. These output are essential for the final step of calculating the entrywise *p*-values as well as the pleiotropic *p*-values.
 
+The estimated coefficient matrix is 
 Finally, the `q x p` entrywise (`pval1`) and length `p` pleiotropic (`pval2`) *p*-values can simply be obtained using:
 ```
 pval1 <- entry.pvalue(X, Y, Theta, B, E.Z, precM)
