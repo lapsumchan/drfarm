@@ -118,7 +118,7 @@ pval2
 
 ### Fitting `remMap` with Helper Functions
 
-The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lambda_1`,`\lambda_2`)} pair. A typical workflow is:
+The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lambda_1`,`\lambda_2`) pair. A typical workflow is:
 
 1. **Generate a tuning grid**  
    ```
@@ -141,3 +141,36 @@ The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lamb
    BIC <- remMap.EBIC(X, Y, Theta0.cand, gamma = 0, standardize = TRUE)
    ```
    In this toy example, `i = 36` is the row that yields the smallest EBIC, so we choose that corresponding `Theta0` as our final remMap estimate.
+
+### Fitting `DrFARM` with Helper Functions
+
+Once you select the optimal `Theta0` from remMap (and corresponding (`lambda1.star` and `lambda2.star`), you can do the same for DrFARM:
+
+1. **Obtain a precision matrix**
+   DrFARM requires estimating the precision matrix of `X`. By default, the function `precM()` uses the graphical lasso as recommended in our paper
+   ```
+   precM <- precM(X, method = "glasso", standardize = TRUE)
+   ```
+2. **Generate a tuning grid**
+   `DrFARM.grid()` build a grid around the chosen lasso (`lambda1.star`) and group-lasso (`lambda2.star`) parameters from remMap. Notice it also requires pre-specifying the number of latent factors `k`:
+   ```
+   lambda1.star <- remMap.lambda.grid[i,1]
+   lambda2.star <- remMap.lambda.grid[i,2]
+   
+   DrFARM.lambda.grid <- DrFARM.grid(X, Y, Theta0, precM, k = 2, lambda1.opt = lambda1.star, lambda2.opt = lambda2.star)
+3. **Fit a model for each grid cell**
+   ```
+   # Example with the i-th row of the grid:
+   i <- 19
+   DrFARM.one.res <- DrFARM.one(X, Y, Theta0, precM, k = 2, lambda1 = DrFARM.lambda.grid[i,1], lambda2 = DrFARM.lambda.grid[i,2])
+   ```
+4. **Select the best solution via EBIC**
+   ```
+   Theta <- DrFARM.one.res$Theta;
+   B <- DrFARM.one.res$B;
+   E.Z <- DrFARM.one.res$E.Z;
+   diag.Psi <- DrFARM.one.res$diag.Psi;
+
+   EBIC <- DrFARM.EBIC(X, Y, Theta, B, E.Z, diag.Psi)
+   ```
+   
