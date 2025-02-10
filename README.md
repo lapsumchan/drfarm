@@ -113,3 +113,31 @@ pval1
 pval2
 [1] 9.344327e-01 3.852209e-01 4.194237e-18 2.163034e-01 6.287407e-02 5.328321e-01 5.538712e-01 3.884086e-24 7.970215e-01 4.135523e-50
 ```
+
+## Additional Notes
+
+### Fitting `remMap` with Helper Functions
+
+The functions \code{remMap.one()} (and similarly \code{DrFARM.one()}) fit a single \eqn{(\lambda_1,\lambda_2)} pair. A typical workflow is:
+
+1. **Generate a tuning grid**  
+   ```
+   # Suppose this yields 10 x 10 = 100 grid cells
+   remMap.lambda.grid <- remMap.grid(X, Y, standardize = TRUE)
+   ```
+2. **Fit a model for each grid cell**
+   ```
+   # Example using the i-th row of the grid:
+   i <- 36
+   remMap.one(X, Y, lambda1 = remMap.lambda.grid[i,1], lambda2 = remMap.lambda.grid[i,2])
+   ```
+   In practice, you can loop over all grid rows (or use parallelization) to gather 100 candidate solutions, each returning a \code{Theta0} matrix
+3. **Select the best candidate via EBIC**
+   ```
+   EBIC <- remMap.EBIC(X, Y, Theta0.cand, standardize = TRUE)
+   ```
+   By default, \code{remMap.EBIC} sets \code{gamma = 1}, encouraging stronger sparsity. If you prefer a standard BIC (less sparse solution), use:
+   ```
+   BIC <- remMap.EBIC(X, Y, Theta0.cand, gamma = 0, standardize = TRUE)
+   ```
+   In this toy example, \code{i = 36} is the row that yields the smallest EBIC, so we choose that corresponding \code{Theta0} as our final remMap estimate.
