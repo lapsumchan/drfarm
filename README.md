@@ -190,3 +190,7 @@ mlasso <- remMap.one(X, Y, lambda1 = lambda1.grid[i], lambda2 = 0)
 ```
 A similar approach works for `DrFARM.one()` if you wish to consider a lasso-only penalty in the DrFARM setting as well.
 
+# Citation
+
+If you find `drfarm` useful, please cite:
+> Chan, Lap Sum, et al. "DrFARM: Identification and inference for pleiotropic gene in GWAS." bioRxiv (2022): 2022-11.
