@@ -136,8 +136,8 @@ The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lamb
    ```
    EBIC <- remMap.EBIC(X, Y, Theta0.cand, standardize = TRUE)
    ```
-   By default, \code{remMap.EBIC} sets \code{gamma = 1}, encouraging stronger sparsity. If you prefer a standard BIC (less sparse solution), use:
+   By default, `remMap.EBIC` sets `gamma = 1`, encouraging stronger sparsity. If you prefer a standard BIC (less sparse solution), use:
    ```
    BIC <- remMap.EBIC(X, Y, Theta0.cand, gamma = 0, standardize = TRUE)
    ```
-   In this toy example, \code{i = 36} is the row that yields the smallest EBIC, so we choose that corresponding \code{Theta0} as our final remMap estimate.
+   In this toy example, `i = 36` is the row that yields the smallest EBIC, so we choose that corresponding `Theta0` as our final remMap estimate.
