@@ -129,7 +129,7 @@ The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lamb
    ```
    # Example using the i-th row of the grid:
    i <- 36
-   remMap.one(X, Y, lambda1 = remMap.lambda.grid[i,1], lambda2 = remMap.lambda.grid[i,2])
+   Theta0.cand <- remMap.one(X, Y, lambda1 = remMap.lambda.grid[i,1], lambda2 = remMap.lambda.grid[i,2])
    ```
    In practice, you can loop over all grid rows (or use parallelization) to gather 100 candidate solutions, each returning a `Theta0` matrix
 3. **Select the best candidate via EBIC**
@@ -154,6 +154,7 @@ Once you select the optimal `Theta0` from remMap (and corresponding (`lambda1.st
 2. **Generate a tuning grid**
    `DrFARM.grid()` build a grid around the chosen lasso (`lambda1.star`) and group-lasso (`lambda2.star`) parameters from remMap. Notice it also requires pre-specifying the number of latent factors `k`:
    ```
+   Theta0 <- Theta0.cand
    lambda1.star <- remMap.lambda.grid[i,1]
    lambda2.star <- remMap.lambda.grid[i,2]
    
