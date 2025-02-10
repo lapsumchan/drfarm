@@ -65,7 +65,6 @@ To use DrFARM, we first obtain an initial sparse estimate (`Theta0`) using remMa
 remMap.res <- remMap.whole(X, Y)
 Theta0 <- remMap.res$Theta0
 
-Theta0
 > Theta0
      [,1] [,2]         [,3] [,4] [,5] [,6] [,7]       [,8] [,9]      [,10]
 [1,]    0    0 -0.208809944    0    0    0    0 0.00000000    0 -0.1635109
@@ -162,7 +161,7 @@ Once you select the optimal `Theta0` from remMap (and corresponding (`lambda1.st
 3. **Fit a model for each grid cell**
    ```
    # Example with the i-th row of the grid:
-   i <- 19
+   i <- 22
    DrFARM.one.res <- DrFARM.one(X, Y, Theta0, precM, k = 2, lambda1 = DrFARM.lambda.grid[i,1], lambda2 = DrFARM.lambda.grid[i,2])
    ```
 4. **Select the best solution via EBIC**
