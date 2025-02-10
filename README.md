@@ -177,3 +177,16 @@ After selecting the optimal `Theta0` from remMap (and corresponding (`lambda1.st
    ```
    In this example, `i = 22` yields the smallest EBIC, so `Theta` here should be identical to that found by `DrFARM.whole()`.
    
+### Special Case: (`lambda2 = 0`)
+In remMap, setting `lambda2 = 0` removes the group-lasso penalty and yields a pure multivariate lasso model. Below is a minimal example:
+```
+# Generate a 2D grid (100 x 100), but only keep the unique lambda1 values
+remMap.lambda.grid <- remMap.grid(X, Y, n.lambda = 100)
+lasso.grid <- sort(unique(remMap.lambda.grid[, 1]))
+
+# i = 63 yields the smallest EBIC
+i <- 63
+mlasso <- remMap.one(X, Y, lambda1 = lambda1.grid[i], lambda2 = 0)
+```
+A similar approach works for `DrFARM.one()` if you wish to consider a lasso-only penalty in the DrFARM setting as well.
+
