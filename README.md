@@ -118,7 +118,7 @@ pval2
 
 ### Fitting `remMap` with Helper Functions
 
-The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single \eqn{(\lambda_1,\lambda_2)} pair. A typical workflow is:
+The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lambda_1`,`\lambda_2`)} pair. A typical workflow is:
 
 1. **Generate a tuning grid**  
    ```
@@ -131,7 +131,7 @@ The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single \eqn{(\
    i <- 36
    remMap.one(X, Y, lambda1 = remMap.lambda.grid[i,1], lambda2 = remMap.lambda.grid[i,2])
    ```
-   In practice, you can loop over all grid rows (or use parallelization) to gather 100 candidate solutions, each returning a \code{Theta0} matrix
+   In practice, you can loop over all grid rows (or use parallelization) to gather 100 candidate solutions, each returning a `Theta0` matrix
 3. **Select the best candidate via EBIC**
    ```
    EBIC <- remMap.EBIC(X, Y, Theta0.cand, standardize = TRUE)
