@@ -118,7 +118,7 @@ pval2
 
 ### Fitting `remMap` with Helper Functions
 
-The functions \code{remMap.one()} (and similarly \code{DrFARM.one()}) fit a single \eqn{(\lambda_1,\lambda_2)} pair. A typical workflow is:
+The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single \eqn{(\lambda_1,\lambda_2)} pair. A typical workflow is:
 
 1. **Generate a tuning grid**  
    ```
