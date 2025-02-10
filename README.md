@@ -130,28 +130,30 @@ The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lamb
    i <- 36
    Theta0.cand <- remMap.one(X, Y, lambda1 = remMap.lambda.grid[i,1], lambda2 = remMap.lambda.grid[i,2])
    ```
-   In practice, you can loop over all grid rows (or use parallelization) to gather 100 candidate solutions, each returning a `Theta0` matrix
+   In practice, you can loop over all grid rows (or use parallelization) to obtain 100 candidate solutions, each returning a `Theta0` matrix
 3. **Select the best candidate via EBIC**
    ```
    EBIC <- remMap.EBIC(X, Y, Theta0.cand, standardize = TRUE)
    ```
-   By default, `remMap.EBIC` sets `gamma = 1`, encouraging stronger sparsity. If you prefer a standard BIC (less sparse solution), use:
+   By default, `remMap.EBIC` sets `gamma = 1`, encouraging stronger sparsity. If you prefer a standard BIC (less sparse solution), set `gamma = 0`:
    ```
    BIC <- remMap.EBIC(X, Y, Theta0.cand, gamma = 0, standardize = TRUE)
    ```
-   In this toy example, `i = 36` is the row that yields the smallest EBIC, so we choose that corresponding `Theta0` as our final remMap estimate.
+   In this toy example, `i = 36` gives the smallest EBIC, so we choose that corresponding `Theta0` as our final remMap estimate.
 
 ### Fitting `DrFARM` with Helper Functions
 
-Once you select the optimal `Theta0` from remMap (and corresponding (`lambda1.star` and `lambda2.star`), you can do the same for DrFARM:
+After selecting the optimal `Theta0` from remMap (and corresponding (`lambda1.star` and `lambda2.star`), we can perform a similar procedure for DrFARM:
 
 1. **Obtain a precision matrix**
-   DrFARM requires estimating the precision matrix of `X`. By default, the function `precM()` uses the graphical lasso as recommended in our paper
+   
+   DrFARM requires estimating the precision matrix of `X`. By default, the function `precM()` uses the graphical lasso (as recommended in our paper):
    ```
    precM <- precM(X, method = "glasso", standardize = TRUE)
    ```
 2. **Generate a tuning grid**
-   `DrFARM.grid()` build a grid around the chosen lasso (`lambda1.star`) and group-lasso (`lambda2.star`) parameters from remMap. Notice it also requires pre-specifying the number of latent factors `k`:
+   
+   `DrFARM.grid()` build a 5 x 5 grid around the chosen lasso (`lambda1.star`) and group-lasso (`lambda2.star`) parameters from remMap. It also requires specifying the number of latent factors `k`:
    ```
    Theta0 <- Theta0.cand
    lambda1.star <- remMap.lambda.grid[i,1]
@@ -173,4 +175,5 @@ Once you select the optimal `Theta0` from remMap (and corresponding (`lambda1.st
 
    EBIC <- DrFARM.EBIC(X, Y, Theta, B, E.Z, diag.Psi)
    ```
+   In this example, `i = 22` yields the smallest EBIC, so `Theta` here should be identical to that found by `DrFARM.whole()`.
    
