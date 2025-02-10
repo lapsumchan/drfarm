@@ -542,6 +542,9 @@ precM <- function(X, method = "glasso", standardize = TRUE) {
 #' @param lambda2.opt The chosen group-lasso tuning parameter from \code{remMap.whole}
 #' @param K An optional size \eqn{n \times n} kinship matrix. Default is \code{NULL}
 #' @param standardize A logical indicating whether to standardize \code{X} and \code{Y} by column. Default is \code{TRUE}
+#' #' @param rotate Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"none"})
+#' @param scores Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})
+#' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
 #'
 #' @return A data frame with two columns: \code{lambda1} and \code{lambda2}
 #'
@@ -549,7 +552,10 @@ precM <- function(X, method = "glasso", standardize = TRUE) {
 DrFARM.grid <- function(X, Y, Theta0, precM, k,
                         lambda1.opt, lambda2.opt,
                         K = NULL,
-                        standardize = TRUE) {
+                        standardize = TRUE,
+                        rotate = "none",
+                        scores = "regression",
+                        fm = "ml") {
 
   n <- dim(X)[1]
 
