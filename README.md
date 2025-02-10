@@ -186,7 +186,7 @@ lasso.grid <- sort(unique(remMap.lambda.grid[, 1]))
 
 # i = 63 yields the smallest EBIC
 i <- 63
-mlasso <- remMap.one(X, Y, lambda1 = lambda1.grid[i], lambda2 = 0)
+mlasso <- remMap.one(X, Y, lambda1 = lasso.grid[i], lambda2 = 0)
 ```
 A similar approach works for `DrFARM.one()` if you wish to consider a lasso-only penalty in the DrFARM setting as well.
 
