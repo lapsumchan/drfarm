@@ -838,7 +838,8 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
                          thres = 1e-4,
                          rotate = "none",
                          scores = "regression",
-                         fm = "ml") {
+                         fm = "ml",
+                         print.iter = FALSE) {
 
   n <- dim(X)[1]
   p <- dim(X)[2]
