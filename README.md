@@ -191,19 +191,35 @@ mlasso <- remMap.one(X, Y, lambda1 = lasso.grid[i], lambda2 = 0)
 A similar approach works for `DrFARM.one()` if you wish to consider a lasso-only penalty in the DrFARM setting as well.
 
 ### Choosing the Number of Latent Factors
-Below is a minimal example illustrating how to use Exploratory Graph Analysis (EGA) via the `EGAnet` package to guide factor selection in DrFARM:
+Below is a minimal example illustrating how to use Exploratory Graph Analysis (EGA) via the `EGAnet` package to guide factor selection:
 ```
-# install.packages("EGAnet") # Install EGAnet if not already installed
+# If not already installed:
+# install.packages("EGAnet")
 library(EGAnet)
-Theta <- t(Theta)
-Theta.db.t <- Theta.t + (precM %*% crossprod(X, (Y - X %*% Theta.t))) / n
-E.star <- Y - X %*% Theta.db.t
 
+# Note: Our DrFARM-related functions typically work on standardized data
+#       (Coefficients are in the standardized scale, even if your original X/Y are unscaled.)
+X.std <- scale(X)
+Y.std <- scale(Y)
+
+n <- dim(Y.std)[1]
+
+# Suppose we already have a converged DrFARM solution 'Theta' (q x p) and precM (p x p).
+# Debias 'Theta' to get 'Theta.db.t'
+Theta.t <- t(Theta)  # p x q
+Theta.db.t <- Theta.t + (precM %*% crossprod(X.std, (Y.std - X.std %*% Theta.t))) / n
+
+# Residual matrix E.star
+E.star <- Y.std - X.std %*% Theta.db.t
+
+# Run EGA
 ega.res <- EGA(E.star, plot.EGA = FALSE)
 
-> print(ega.res$n.dim)
+# Check the recommended factor count
+print(ega.res$n.dim)
 [1] 2
 ```
+Here, we used the converged DrFARM estimate (i.e., a final solution). In practice, you can do the same procedure using an initial `Theta0` (e.g., from \code{remMap}) to get a preliminary sense of `k`. Depending on your data and goals, other approaches (e.g., parallel analysis in `psych`, domain knowledge) can also guide your factor selection.
 
 # Citation
 
