@@ -198,11 +198,8 @@ remMap.grid <- function(X, Y, standardize = TRUE,
     Y <- scale(Y)
   }
 
-  lambda.vec <- rep(NA, q)
-  for (j in 1:q) {
-    lambda.vec[j] <- max(abs(colSums(X * Y[,j])))
-  }
-  lambda.max <- max(lambda.vec)
+  XTY <- crossprod(X, Y)
+  lambda.max <- max(abs(XTY))
 
   lambda.seq <- round(exp(seq(log(lambda.max), log(lambda.max*lambda.min.ratio),
                               length.out = n.lambda)), digits = 10)
@@ -275,7 +272,7 @@ remMap.EBIC <- function(X, Y, Theta0, standardize = TRUE,
   }
 
   E <- Y - X %*% t(Theta0)
-  RSS <- diag(t(E) %*% E)
+  RSS <- colSums(E^2)
   EBIC <- n * sum(log(RSS)) +
     log(n) * sum(Theta0 != 0) +
     2 * gamma * logsumchoose(q, rowSums(t(Theta0) != 0))
@@ -320,11 +317,8 @@ remMap.whole <- function(X, Y, standardize = TRUE,
     Y <- scale(Y)
   }
 
-  lambda.vec <- rep(NA, q)
-  for (j in 1:q) {
-    lambda.vec[j] <- max(abs(colSums(X * Y[,j])))
-  }
-  lambda.max <- max(lambda.vec)
+  XTY <- crossprod(X, Y)
+  lambda.max <- max(abs(XTY))
 
   lambda.seq <- round(exp(seq(log(lambda.max), log(lambda.max*lambda.min.ratio),
                               length.out = n.lambda)), digits = 10)
@@ -345,7 +339,7 @@ remMap.whole <- function(X, Y, standardize = TRUE,
   EBIC.vec <- rep(NA, n.lambda.sq)
   for (i in 1:n.lambda.sq) {
     E <- Y - X %*% t(ls[[i]])
-    RSS <- diag(t(E) %*% E)
+    RSS <- colSums(E^2)
     EBIC.vec[i] <- n * sum(log(RSS)) +
       log(n) * sum(ls[[i]] != 0) +
       2 * gamma * logsumchoose(q, rowSums(t(ls[[i]]) != 0))
@@ -385,7 +379,7 @@ precM.glasso <- function(X, standardize = TRUE,
     X <- scale(X)
   }
 
-  CovM <- t(X) %*% (X) / n
+  CovM <- crossprod(X) / n
   a <- glassopath(CovM, rholist, thr, maxit)
   n.grid <- dim(a$wi)[3]
   EBIC.vec <- rep(NA, n.grid)
@@ -503,7 +497,7 @@ precM.QO <- function(X, standardize = TRUE) {
     X <- scale(X)
   }
 
-  CovM <- t(X) %*% (X) / n
+  CovM <- crossprod(X) / n
   precM <- InverseLinfty(CovM, n, resol = 1.3)
   return(precM)
 }
@@ -574,7 +568,8 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
     d <- rep(1, n)
   }
 
-  Theta0.db.t <- t(Theta0) + t(t(Y - X %*% t(Theta0)) %*% X %*% precM) / n
+  Theta0.t <- t(Theta0)
+  Theta0.db.t <- Theta0.t + (precM %*% crossprod(X, Y - X %*% Theta0.t)) / n
   E.star <- Y - X %*% Theta0.db.t
   fa.res <- fa(E.star, nfactors = k, rotate = rotate, scores = scores, fm = fm, covar = TRUE)
   diag.Psi <- fa.res$uniquenesses
@@ -648,7 +643,8 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
   }
 
   # Debias the sparse estimator used for initial value
-  Theta0.db.t <- t(Theta0) + t(t(Y - X %*% t(Theta0)) %*% X %*% precM) / n
+  Theta0.t <- t(Theta0)
+  Theta0.db.t <- Theta0.t + (precM %*% crossprod(X, Y - X %*% Theta0.t)) / n
   E.star <- Y - X %*% Theta0.db.t
 
   # Factor analysis (initial)
@@ -704,7 +700,7 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
                         phi0 = prev.Theta.t, C.m = t(C), sigma = diag.Psi)$phi
     }
     e <- Y - X %*% Theta.t
-    Theta.db.t <- Theta.t + t(t(Y.aug - X %*% Theta.t) %*% X %*% precM) / n
+    Theta.db.t <- Theta.t + (precM %*% crossprod(X, Y.aug - X %*% Theta.t)) / n
     E.star <- Y - X %*% Theta.db.t
 
     B <- t(E.zt %*% E.star) %*% E.zzt.inv
@@ -847,7 +843,8 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
     Y <- scale(Y)
   }
 
-  Theta0.db.t <- t(Theta0) + t(t(Y - X %*% t(Theta0)) %*% X %*% precM) / n
+  Theta0.t <- t(Theta0)
+  Theta0.db.t <- Theta0.t + (precM %*% crossprod(X, Y - X %*% Theta0.t)) / n
   E.star <- Y - X %*% Theta0.db.t
   fa.res <- fa(E.star, nfactors = k, rotate = rotate, scores = scores, fm = fm, covar = TRUE)
   diag.Psi <- fa.res$uniquenesses
@@ -916,13 +913,13 @@ entry.pvalue <- function(X, Y, Theta, B, E.Z, precM,
   Y.aug <- Y - E.Z %*% t(B)
 
   Theta.t <- t(Theta)
-  Theta.db.t <- Theta.t + t(t(Y.aug - X %*% Theta.t) %*% X %*% precM) / n
+  Theta.db.t <- Theta.t + (precM %*% crossprod(X, Y.aug - X %*% Theta.t)) / n
 
   s <- colSums(Theta.t != 0)
   sses <- diag(t(Y - X %*% Theta.t - E.Z %*% t(B)) %*% (Y - X %*% Theta.t - E.Z %*% t(B)))
   Psi.star <- sses / (n - s)
 
-  CovM <- t(X) %*% X / n
+  CovM <- crossprod(X) / n
   sqrtPhi <- sqrt(diag(precM %*% CovM %*% t(precM)))
 
   Z <- matrix(NA, p, q)
@@ -965,13 +962,13 @@ pleio.pvalue <- function(X, Y, Theta, B, E.Z, precM,
   Y.aug <- Y - E.Z %*% t(B)
 
   Theta.t <- t(Theta)
-  Theta.db.t <- Theta.t + t(t(Y.aug - X %*% Theta.t) %*% X %*% precM) / n
+  Theta.db.t <- Theta.t + (precM %*% crossprod(X, Y.aug - X %*% Theta.t)) / n
 
   s <- colSums(Theta.t != 0)
   sses <- diag(t(Y - X %*% Theta.t - E.Z %*% t(B)) %*% (Y - X %*% Theta.t - E.Z %*% t(B)))
   Psi.star <- sses / (n - s)
 
-  CovM <- t(X) %*% X / n
+  CovM <- crossprod(X) / n
   sqrtPhi <- sqrt(diag(precM %*% CovM %*% t(precM)))
 
   Z <- matrix(NA, p, q)
