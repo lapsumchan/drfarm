@@ -219,7 +219,7 @@ ega.res <- EGA(E.star, plot.EGA = FALSE)
 print(ega.res$n.dim)
 [1] 2
 ```
-Here, we used the converged DrFARM estimate (i.e., a final solution). In practice, you can do the same procedure using an initial `Theta0` (e.g., from `remMap`) to get a preliminary sense of `k`. Depending on your data and goals, other approaches (e.g., parallel analysis in `psych`, domain knowledge) can also guide your factor selection.
+Here, we used the converged DrFARM estimate (i.e., a final solution after fixing `k`), which is more confirmatory. In practice, you can run the same procedure with an initial `Theta0` (e.g., from `remMap`) to get a preliminary sense of `k`, especially if you haven't yet settled on a final DrFARM fit. Depending on your data and goals, other approaches (e.g., parallel analysis in `psych`, domain knowledge) can also guide factor selection.
 
 # Citation
 
