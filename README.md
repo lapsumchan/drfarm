@@ -191,7 +191,7 @@ mlasso <- remMap.one(X, Y, lambda1 = lasso.grid[i], lambda2 = 0)
 A similar approach works for `DrFARM.one()` if you wish to consider a lasso-only penalty in the DrFARM setting as well.
 
 ### Choosing the Number of Latent Factors
-Below is a minimal example illustrating how to use Exploratory Graph Analysis (EGA) via the `EGAnet` package to guide factor selection:
+Below is a minimal example illustrating how to use Exploratory Graph Analysis (EGA) via the `EGAnet` package (approach used in our paper) to guide factor selection:
 ```
 # If not already installed:
 # install.packages("EGAnet")
