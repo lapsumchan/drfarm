@@ -198,7 +198,7 @@ Below is a minimal example illustrating how to use Exploratory Graph Analysis (E
 library(EGAnet)
 
 # Note: Our DrFARM-related functions typically work on standardized data
-#       (Coefficients are in the standardized scale, even if your original X/Y are unscaled.)
+#       (Coefficients are in the standardized scale, even if your original X/Y are unscaled)
 X.std <- scale(X)
 Y.std <- scale(Y)
 
@@ -219,7 +219,7 @@ ega.res <- EGA(E.star, plot.EGA = FALSE)
 print(ega.res$n.dim)
 [1] 2
 ```
-Here, we used the converged DrFARM estimate (i.e., a final solution). In practice, you can do the same procedure using an initial `Theta0` (e.g., from \code{remMap}) to get a preliminary sense of `k`. Depending on your data and goals, other approaches (e.g., parallel analysis in `psych`, domain knowledge) can also guide your factor selection.
+Here, we used the converged DrFARM estimate (i.e., a final solution). In practice, you can do the same procedure using an initial `Theta0` (e.g., from `remMap`) to get a preliminary sense of `k`. Depending on your data and goals, other approaches (e.g., parallel analysis in `psych`, domain knowledge) can also guide your factor selection.
 
 # Citation
 
