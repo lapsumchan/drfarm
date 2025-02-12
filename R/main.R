@@ -606,6 +606,7 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
 #' @param rotate Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"none"})
 #' @param scores Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})
 #' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
+#' @param print.iter A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}
 #'
 #' @return A list containing:
 #' \item{Theta}{A size \eqn{q \times p} coefficient matrix}
@@ -621,7 +622,8 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
                        thres = 1e-4,
                        rotate = "none",
                        scores = "regression",
-                       fm = "ml") {
+                       fm = "ml",
+                       print.iter = FALSE) {
 
   n <- dim(X)[1]
   p <- dim(X)[2]
@@ -722,7 +724,10 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
       lambda2 * sum(sqrt(rowSums(Theta.t^2))) +
       n * sum(log(diag.Psi)) / 2
 
-    print(c("M-step", "iter", iter, loss))
+    # Optional iteration messages
+    if (print.iter) {
+      message("M-step, iter = ", iter, ", loss = ", loss)
+    }
 
     diff <- prev.loss - loss
     prev.loss <- loss
@@ -814,6 +819,7 @@ DrFARM.EBIC <- function(X, Y, Theta, B, E.Z, diag.Psi, K = NULL,
 #' @param rotate Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"none"})
 #' @param scores Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})
 #' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
+#' @param print.iter A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}
 #'
 #' @return A list containing:
 #' \item{Theta}{The EBIC-chosen \eqn{q \times p} coefficient matrix}
@@ -861,7 +867,7 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
                           DrFARM.lambda.grid[i,1], DrFARM.lambda.grid[i,2],
                           K = K, C = C, standardize = FALSE,
                           thres = thres, rotate = rotate,
-                          scores = scores, fm = fm)
+                          scores = scores, fm = fm, print.iter = print.iter)
   }
 
   EBIC.vec <- rep(NA, n.lambda.sq)
@@ -916,7 +922,7 @@ entry.pvalue <- function(X, Y, Theta, B, E.Z, precM,
   Theta.db.t <- Theta.t + (precM %*% crossprod(X, Y.aug - X %*% Theta.t)) / n
 
   s <- colSums(Theta.t != 0)
-  sses <- diag(t(Y - X %*% Theta.t - E.Z %*% t(B)) %*% (Y - X %*% Theta.t - E.Z %*% t(B)))
+  sses <- colSums((Y - X %*% Theta.t - E.Z %*% t(B))^2)
   Psi.star <- sses / (n - s)
 
   CovM <- crossprod(X) / n
@@ -965,7 +971,7 @@ pleio.pvalue <- function(X, Y, Theta, B, E.Z, precM,
   Theta.db.t <- Theta.t + (precM %*% crossprod(X, Y.aug - X %*% Theta.t)) / n
 
   s <- colSums(Theta.t != 0)
-  sses <- diag(t(Y - X %*% Theta.t - E.Z %*% t(B)) %*% (Y - X %*% Theta.t - E.Z %*% t(B)))
+  sses <- colSums((Y - X %*% Theta.t - E.Z %*% t(B))^2)
   Psi.star <- sses / (n - s)
 
   CovM <- crossprod(X) / n
