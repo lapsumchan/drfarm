@@ -140,10 +140,10 @@ independent rows. Generalized-response DrFARM, new response families, and Python
 support are not established by this work.
 
 The package is implemented in R with an existing Rcpp kernel. Read the
-[Gaussian ECM derivation](../technical/GAUSSIAN_ECM_REFERENCE.md),
-[weighted objective](../technical/WEIGHTED_UPDATE.md), and
-[known issues](../technical/KNOWN_ISSUES.md) for details. The
-[recorded ECM summary](../evidence/gaussian-ecm-summary.json) binds these numbers
+[Gaussian ECM derivation](../../docs/GAUSSIAN_ECM_REFERENCE.md),
+[weighted objective](../../docs/WEIGHTED_UPDATE.md), and
+[known issues](../../docs/KNOWN_ISSUES.md) for details. The
+[recorded ECM summary](../../pkgdown/assets/evidence/gaussian-ecm-summary.json) binds these numbers
 to the previous source and execution; the site build does not rerun that grid.
 
 *Latent factors. Explicit assumptions.*

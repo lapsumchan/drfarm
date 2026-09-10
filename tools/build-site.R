@@ -62,7 +62,10 @@ for (name in c("WEBSITE.md", "CITING.md", "KNOWN_ISSUES.md", "GAUSSIAN_ECM_REFER
   copy(file.path(root, "docs", name), file.path(stage, name))
 }
 method_path <- file.path(stage, "vignettes/articles/methods-status.Rmd")
-writeLines(gsub("../technical/", "../", readLines(method_path), fixed = TRUE), method_path)
+method_text <- readLines(method_path)
+method_text <- gsub("../../docs/", "../", method_text, fixed = TRUE)
+method_text <- gsub("../../pkgdown/assets/", "../", method_text, fixed = TRUE)
+writeLines(method_text, method_path)
 capture.output(sessionInfo(), file = file.path(work, "sessionInfo.txt"))
 # Optional cross-package link metadata must not cause network access while
 # rendering. downlit catches unavailable metadata and uses its documented fallback.
