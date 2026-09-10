@@ -33,8 +33,8 @@ identifies the software's version series. Use it for discovery; use the
 ## Cite the code actually used
 
 Cite the method paper and the installed software version. For historical 0.1.0,
-use its version DOI above. For this unpublished **0.1.0.9002** development
-candidate, record the repository URL and full source commit alongside the package
+use its version DOI above. For this **0.1.0.9002** development
+version, record the repository URL and full source commit alongside the package
 version; it has no newly assigned release DOI. The 0.1.0 archive does **not**
 contain the weighted coefficient option or Gaussian ECM reference.
 
@@ -76,8 +76,9 @@ For each scientific release:
 The [GitHub–Zenodo integration](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content)
 can archive GitHub releases; it is not continuous mirroring of every commit.
 Before enabling or changing it, verify the repository's existing connection and
-the maintainer's control of this Zenodo series. No integration or publication
-has been changed in this documentation sprint.
+the maintainer's control of this Zenodo series. Publishing development code to
+GitHub does not update the Zenodo archive; no new archive has been published in
+this documentation sprint.
 
 `CITATION.cff` supplies machine-readable GitHub citation metadata; `inst/CITATION`
 supplies R's citations. Keep their authors, version and article DOI consistent.

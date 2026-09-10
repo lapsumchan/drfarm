@@ -19,11 +19,32 @@ site_link <- function(label, path) {
 
 ## Install the matching source
 
-These pages describe the **0.1.0.9002 development candidate**. Public GitHub main
-still contains historical 0.1.0. Install the candidate before using its new
+These pages describe the **0.1.0.9002 development version**. Install the matching
+source before using its new
 diagnostics, weighted coefficient option or Gaussian ECM reference.
 
-On the documentation site, download the
+The checked development source is available from GitHub:
+
+```{r github-installation, eval=FALSE}
+install.packages("remotes")
+remotes::install_github(
+  "lapsumchan/drfarm@310b502a2eadc073e095bff02c141dbeabc56b73",
+  upgrade = "never"
+)
+```
+
+The commit fixes the source version. To also match the recorded dependency
+versions, use a full source checkout:
+
+```sh
+git clone https://github.com/lapsumchan/drfarm.git
+cd drfarm
+git checkout 310b502a2eadc073e095bff02c141dbeabc56b73
+Rscript --vanilla tools/install-dependencies.R
+R CMD INSTALL .
+```
+
+If using the optional documentation-site preview, download the
 `r site_link("candidate source archive", "../downloads/drfarm_0.1.0.9002.tar.gz")`.
 From the directory containing that file, run in R:
 
@@ -32,13 +53,6 @@ install.packages(c("glasso", "glmnet", "psych", "Rcpp"))
 install.packages("drfarm_0.1.0.9002.tar.gz", repos = NULL, type = "source")
 library(drfarm)
 packageVersion("drfarm")
-```
-
-For the recorded dependency versions, use the full source checkout instead:
-
-```sh
-Rscript --vanilla tools/install-dependencies.R
-R CMD INSTALL .
 ```
 
 R ≥ 4.3.0 and a C++ compilation toolchain are required. The current local checks

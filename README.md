@@ -46,20 +46,23 @@ does not establish a generalized-response extension. There is no Python API.
 See [methods and status](vignettes/articles/methods-status.Rmd) for the objectives,
 assumptions and limits.
 
-## Install this candidate
+## Install the development version
 
-This checkout documents **0.1.0.9002**. With R ≥ 4.3.0 and a C++ compiler, run
-these commands from the candidate source directory supplied in the review bundle
-or a checkout containing this README:
+This README documents **0.1.0.9002**. With R ≥ 4.3.0 and a C++ compiler,
+install the checked development source from GitHub:
 
-```sh
-Rscript --vanilla tools/install-dependencies.R
-R CMD INSTALL .
+```r
+install.packages("remotes")
+remotes::install_github(
+  "lapsumchan/drfarm@310b502a2eadc073e095bff02c141dbeabc56b73",
+  upgrade = "never"
+)
 ```
 
-The installer records exact dependency versions. The documentation site also
-provides a candidate source download in **Get started**. This candidate has not
-yet been published to CRAN or public GitHub main.
+The commit pins the source used for the local package checks and examples.
+For the recorded dependency versions, follow the source-checkout instructions
+in [Get started](vignettes/getting-started.Rmd). This development version has
+no CRAN release or new Zenodo release DOI.
 
 For the publicly available **historical 0.1.0** source only:
 

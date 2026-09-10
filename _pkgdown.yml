@@ -20,11 +20,11 @@ home:
     structure: [candidate, links, license, citation, authors]
     components:
       candidate:
-        title: Review candidate
+        title: Development version
         text: >
           **0.1.0.9002** · R + Rcpp.
           [Install and run](articles/getting-started.html).
-          Public main remains historical 0.1.0.
+          Historical 0.1.0 remains separately archived.
   links:
     - text: Source repository
       href: https://github.com/lapsumchan/drfarm

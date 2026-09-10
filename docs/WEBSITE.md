@@ -37,8 +37,8 @@ The builder stages a public-file allowlist, builds and installs the source
 package in `site-build/library`, and renders `_site/`. It never reads private
 project handoffs. Build/install logs, installed exports and session information
 are written to `site-build/`. The site includes its matching source archive and
-standalone example scripts in `downloads/`; this avoids linking new APIs to the
-older public-main installation. Generated output is ignored by Git.
+standalone example scripts in `downloads/` so readers can install the source
+matching those pages. Generated output is ignored by Git.
 
 Open `_site/index.html` to browse the static preview, or serve `_site/` with a
 local static-file server. An optional development preview is provided by
@@ -85,10 +85,10 @@ a local build or an ordinary merge does not enable public Pages.
 
 The proposed site is the package documentation at
 `https://lapsumchan.github.io/drfarm/`, not Student W's personal website.
-Before publication, review the local implementation commits as well as this
-sprint's documentation diff: public main lacks the weighted coefficient path,
-Gaussian ECM reference, finite-budget diagnostics, tests and maintenance docs.
-Update the candidate/public-main status text when the publication state changes.
+The 0.1.0.9002 development source includes the weighted coefficient path,
+Gaussian ECM reference, finite-budget diagnostics, tests and maintenance docs;
+the separately archived historical 0.1.0 source does not. Review their distinct
+method status before publishing a release or interpreting inference.
 No passing Actions run or deployment is claimed by the local receipt.
 
 References: [pkgdown introduction](https://pkgdown.r-lib.org/articles/pkgdown.html),
