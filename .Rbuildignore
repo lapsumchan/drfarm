@@ -1,3 +1,14 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+^\.github$
+^AGENTS\.md$
+^CONTRIBUTING\.md$
+^docs$
+^DRFARM_SOFTWARE_CHECKPOINT\.md$
+^evidence$
+^tools$
+^\.local-R-library$
+^ci-logs$
+^drfarm_.*\.tar\.gz$
+^\.git$

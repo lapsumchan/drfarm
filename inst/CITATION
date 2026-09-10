@@ -1,0 +1,12 @@
+bibentry(
+  bibtype = "Manual",
+  title = "{drfarm}: Debiased-Regularized Factor Analysis Regression",
+  author = c(
+    person("Lap Sum", "Chan"),
+    person("Gen", "Li"),
+    person("Peter X.K.", "Song")
+  ),
+  year = sub("-.*", "", meta$Date),
+  note = paste("R package version", meta$Version),
+  url = "https://github.com/lapsumchan/drfarm"
+)

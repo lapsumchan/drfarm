@@ -11,7 +11,7 @@ remMap.EBIC(X, Y, Theta0, standardize = TRUE, gamma = 1)
 
 \item{Y}{A size \eqn{n \times q} matrix of outcomes (e.g., continuous omics traits). Missing values are not allowed}
 
-\item{Theta0}{A \eqn{q \times q} coefficient matrix}
+\item{Theta0}{A \eqn{q \times p} coefficient matrix}
 
 \item{standardize}{A logical indicating whether to standardize \code{X} and \code{Y} by column. Default is \code{TRUE}}
 

@@ -1,0 +1,89 @@
+---
+title: "Getting started with drfarm"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with drfarm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## What is estimated?
+
+For continuous responses, DrFARM represents the data as
+
+$$Y = X\Theta^T + ZB^T + E.$$
+
+`X` has one row per participant and one column per observed predictor; `Y` has
+one column per outcome. The fitted `Theta` has **outcome rows and predictor
+columns**. A sparse-group penalty encourages sparsity in its entries and
+predictor columns. The factor structure describes residual outcome dependence,
+not a low-rank constraint on `Theta`. Choosing the number of factors is a
+modeling decision. This vignette uses the package's simulated rank-2 example.
+
+## Run the bounded example
+
+Install this maintenance candidate first. The following executes the same
+script distributed in `inst/examples/quickstart.R`: a four-candidate remMap
+grid, one precision estimate, and one DrFARM fit with a finite iteration budget.
+
+```{r quickstart}
+source(system.file("examples", "quickstart.R", package = "drfarm"), local = TRUE)
+```
+
+The script prints coefficients, termination diagnostics, the observed-predictor
+component on the input scale, and the R session. A returned fit is not itself a
+convergence certificate. Inspect `fit$diagnostics`: its convergence flag requires
+the historical outer loss-change and inner coefficient-change rules, with no
+KKT or global-optimum assertion.
+An iteration limit or loss increase is a distinct termination reason. The
+historical loss-increase trial-return behavior is retained.
+
+This small grid illustrates the API; it does not replace tuning for a scientific
+analysis. `DrFARM.grid()` and `DrFARM.EBIC()` support explicit candidate fitting
+and selection, while `DrFARM.whole()` performs its built-in grid search. Preserve
+the candidate order, preprocessing, factor initialization options, and selection
+criterion when comparing results.
+
+## Keep the scales straight
+
+With the default `standardize = TRUE`, each column is centered and divided by
+its sample standard deviation. The fitted coefficients map standardized
+predictors to standardized outcomes. If `sx` and `sy` are the original column
+standard deviations, then
+
+$$\Theta_{\mathrm{raw}} = \operatorname{diag}(s_y)\,
+\Theta\,\operatorname{diag}(s_x)^{-1},\qquad
+\alpha = \bar Y-\Theta_{\mathrm{raw}}\bar X.$$
+
+The quickstart verifies that this back-transformation matches transformation of
+the standardized predictor component. This algebra does not convert the sparse
+estimate into an unbiased one. The stored generating coefficients
+`drfarm.dat$Theta.t` have the opposite, predictor-by-outcome orientation; matching
+them also requires matching scale.
+
+For `K = NULL`, the training latent contribution is `fit$E.Z %*% t(fit$B)` on the
+standardized outcome scale. Those scores use the training outcomes, so they
+cannot simply be reused for prediction on new participants. Retain training
+centers/scales and participant/predictor/outcome identifiers. The current API
+does not supply a general `predict()` method.
+
+## What this example does not establish
+
+The stored simulated data are bundled with the original package. The original
+simulation script and seed are not bundled, so this example reproduces an
+installation-to-result path rather than the original simulation study.
+
+The original entrywise outer-debiasing and predictor-level p-value functions are
+still available. Their use requires the matching scale, precision and variance
+assumptions. The historical predictor combination uses a two-sided Cauchy tail;
+it is not standard one-sided ACAT. Its inferential interpretation and the
+optional-`K` fitting/selection basis are under review. This example therefore
+uses `K = NULL` and reports estimates and status. No generalized-response
+inference is introduced here.
+
+Use `help(package = "drfarm")` for the API and `citation("drfarm")` for the
+package citation. Original authorship and existing GPL notices are preserved.

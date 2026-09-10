@@ -19,7 +19,9 @@ DrFARM.whole(
   thres = 1e-04,
   rotate = "none",
   scores = "regression",
-  fm = "ml"
+  fm = "ml",
+  print.iter = FALSE,
+  max.iter = Inf
 )
 }
 \arguments{
@@ -58,6 +60,10 @@ If \code{null}, all entries are penalized (1) by default}
 \item{scores}{Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})}
 
 \item{fm}{Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})}
+
+\item{print.iter}{A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}}
+
+\item{max.iter}{Maximum attempted outer iterations, a positive integer or Inf. Default Inf preserves the historical stopping path; use a finite budget for bounded jobs.}
 }
 \value{
 A list containing:
@@ -65,11 +71,23 @@ A list containing:
 \item{B}{A size \eqn{q \times k} factor loading matrix}
 \item{E.Z}{A size \eqn{n \times k} latent factor score matrix}
 \item{diag.Psi}{A length-\eqn{q} vector of uniquenesses (diagonal of \eqn{\Psi}).}
+\item{diagnostics}{Stopping status, attempted iteration count, monitored loss and loss change, thresholds and inner status. Converged means only that the stated stopping criteria were met.}
 \item{lambda1.opt}{Optimal \eqn{\lambda_1} value}
 \item{lambda2.opt}{Optimal \eqn{\lambda_2} value}
+\item{grid.diagnostics}{Candidate penalties, historical EBIC and stopping status in original grid order.}
+\item{selected.index}{First EBIC-minimizing grid row, preserving historical tie-breaking.}
 }
 \description{
 Searches over a 2D grid of (\code{lambda1}, \code{lambda2}) pairs, computes \code{EBIC} for each, and
 returns the \eqn{q x p} coefficient matrix that minimizes the EBIC, along with corresponding
 factor loadings, factor scores, and uniquenesses
+}
+\details{
+Diagnostics distinguish loss_tolerance, loss_increase and max_iter.
+The historical monitored loss is not certified to be the observed-data likelihood
+or the exact M-step objective for unequal uniquenesses. On loss increase the
+historical trial is returned; it is not rolled back or called converged.
+E.Z contains the last E-step scores and, for non-NULL K, is in the K eigenbasis.
+The historical whole-grid K selection path remains unresolved; use care with
+non-NULL K. Failed stopping criteria remain eligible in historical grid selection.
 }

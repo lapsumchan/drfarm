@@ -13,7 +13,10 @@ DrFARM.grid(
   lambda1.opt,
   lambda2.opt,
   K = NULL,
-  standardize = TRUE
+  standardize = TRUE,
+  rotate = "none",
+  scores = "regression",
+  fm = "ml"
 )
 }
 \arguments{
@@ -34,6 +37,12 @@ DrFARM.grid(
 \item{K}{An optional size \eqn{n \times n} kinship matrix. Default is \code{NULL}}
 
 \item{standardize}{A logical indicating whether to standardize \code{X} and \code{Y} by column. Default is \code{TRUE}}
+
+\item{rotate}{Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"none"})}
+
+\item{scores}{Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})}
+
+\item{fm}{Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})}
 }
 \value{
 A data frame with two columns: \code{lambda1} and \code{lambda2}

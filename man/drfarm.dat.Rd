@@ -13,7 +13,9 @@ A list with the following components:
 }
 }
 \source{
-Simulated data
+Historical bundled simulated data (500 participants). The original
+generator script and RNG seed are not included. The stored matrix dimensions
+are verified separately from the reported simulation mechanism.
 }
 \usage{
 drfarm.dat
@@ -29,7 +31,7 @@ coefficient matrix \code{Theta.t}, plus a rank-2 factor structure and random noi
   \item \eqn{X} is generated from a standard normal distribution, \eqn{\mathrm{N}(0, I_p)}
   \item A subset of entries in \eqn{\Theta.t} are nonzero, introduced randomly, to represent true signals.
   \item Residual factors (\eqn{Z}) and factor loadings (\eqn{B}) are introduced so that
-    \eqn{Y = X \Theta^T + Z B^T + E}
+    \eqn{Y = X \Theta_t + Z B^T + E}, where \eqn{\Theta_t} is the stored p-by-q matrix.
   \item \eqn{E} is an independent noise matrix
 }
 }

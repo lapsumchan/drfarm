@@ -25,6 +25,13 @@ pleio.pvalue(X, Y, Theta, B, E.Z, precM, standardize = TRUE)
 A length-\eqn{p} vector of p-values, where each p-value corresponds to one predictor across all outcomes
 }
 \description{
-Computes group-level p-values via the Cauchy combination test, providing a single p-value per predictor
-across all outcomes.
+Computes the historical two-sided Cauchy-tail combination, one value per predictor.
+}
+\details{
+The formula is T = mean(cot(pi * p)) across entry p-values, followed
+by 2 * pcauchy(-abs(T)). This is retained for compatibility; it is not the
+conventional one-sided Cauchy combination. In particular, equal p-values
+approaching either zero or one can yield small combined values. Boundary
+underflow/cancellation and calibration are unresolved. No generalized-response
+inference or kinship-adjusted inference is provided by this function.
 }

@@ -1,4 +1,67 @@
+# Internal input contracts. These checks do not alter valid data or coefficient scale.
+.validate_matrix <- function(x, name, nr = NULL, nc = NULL) {
+  if (!is.matrix(x) || !is.numeric(x) || any(!is.finite(x)) ||
+      any(dim(x) == 0L) || (!is.null(nr) && nrow(x) != nr) ||
+      (!is.null(nc) && ncol(x) != nc)) {
+    stop(name, " must be a finite numeric matrix with the required dimensions.", call. = FALSE)
+  }
+}
+
+.validate_xy <- function(X, Y, standardize) {
+  .validate_matrix(X, "X")
+  .validate_matrix(Y, "Y", nr = nrow(X))
+  if (nrow(X) < 2L) stop("At least two observations are required.", call. = FALSE)
+  if (!is.logical(standardize) || length(standardize) != 1L || is.na(standardize))
+    stop("standardize must be TRUE or FALSE.", call. = FALSE)
+  if (any(colSums(X^2) == 0) || any(!is.finite(colSums(X^2))))
+    stop("X columns must have positive finite squared norms.", call. = FALSE)
+  if (standardize && (any(apply(X, 2L, stats::sd) == 0) ||
+                      any(apply(Y, 2L, stats::sd) == 0)))
+    stop("Cannot standardize constant X or Y columns.", call. = FALSE)
+}
+
+.validate_penalty <- function(lambda1, lambda2, C, q, p) {
+  for (x in list(lambda1, lambda2)) {
+    if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < 0)
+      stop("lambda1 and lambda2 must be finite nonnegative scalars.", call. = FALSE)
+  }
+  if (!is.null(C)) {
+    .validate_matrix(C, "C", q, p)
+    if (any(!C %in% 0:2)) stop("C entries must be 0, 1 or 2.", call. = FALSE)
+  }
+}
+
+.validate_factor_inputs <- function(X, Y, Theta0, precM, k, K) {
+  .validate_matrix(Theta0, "Theta0", ncol(Y), ncol(X))
+  .validate_matrix(precM, "precM", ncol(X), ncol(X))
+  if (length(k) != 1L || !is.numeric(k) || !is.finite(k) ||
+      k < 1 || k != floor(k) || k >= ncol(Y))
+    stop("k must be a positive integer smaller than the number of outcomes.", call. = FALSE)
+  if (!is.null(K)) {
+    .validate_matrix(K, "K", nrow(X), nrow(X))
+    if (!isSymmetric(K)) stop("K must be symmetric.", call. = FALSE)
+  }
+}
+
+.validate_stopping <- function(thres, max.iter) {
+  if (!is.numeric(thres) || length(thres) != 1L || !is.finite(thres) || thres < 0)
+    stop("thres must be a finite nonnegative scalar.", call. = FALSE)
+  if (!is.numeric(max.iter) || length(max.iter) != 1L || is.na(max.iter) ||
+      max.iter < 1 || (is.finite(max.iter) && max.iter != floor(max.iter)))
+    stop("max.iter must be a positive integer or Inf.", call. = FALSE)
+}
+
+.validate_inference <- function(X, Y, Theta, B, E.Z, precM, standardize) {
+  .validate_xy(X, Y, standardize)
+  .validate_matrix(Theta, "Theta", ncol(Y), ncol(X))
+  .validate_matrix(B, "B", nr = ncol(Y))
+  .validate_matrix(E.Z, "E.Z", nrow(X), ncol(B))
+  .validate_matrix(precM, "precM", ncol(X), ncol(X))
+}
+
 remMap <- function(X.m, Y.m, lamL1, lamL2, phi0 = NULL, C.m = NULL, sigma = NULL) {
+  .validate_xy(X.m, Y.m, FALSE)
+  .validate_penalty(lamL1, lamL2, if (is.null(C.m)) NULL else t(C.m), ncol(Y.m), ncol(X.m))
   # Basic dimensions
   n <- nrow(X.m)
   p <- ncol(X.m)
@@ -19,6 +82,9 @@ remMap <- function(X.m, Y.m, lamL1, lamL2, phi0 = NULL, C.m = NULL, sigma = NULL
     }
   }
 
+  if (!is.numeric(sigma) || any(!is.finite(sigma)) || any(sigma <= 0))
+    stop("sigma must contain positive finite variances.", call. = FALSE)
+
   lambda1 <- lamL2
   lambda2 <- lamL1
 
@@ -36,7 +102,14 @@ remMap <- function(X.m, Y.m, lamL1, lamL2, phi0 = NULL, C.m = NULL, sigma = NULL
   E.matrix   <- out$E_debug
   rss.v      <- apply(E.matrix^2, 2, sum)
 
-  list(phi = phi.result, rss.v = rss.v)
+  if (any(!is.finite(phi.result)) || any(!is.finite(rss.v)))
+    stop("remMap produced nonfinite coefficients or residual sums of squares.", call. = FALSE)
+  diagnostics <- list(iterations = out$N_iter, converged = out$converged,
+                      termination = out$termination, final.delta = out$final_delta,
+                      threshold = out$threshold, update.budget = out$update_budget)
+  if (!isTRUE(diagnostics$converged))
+    warning("remMap coefficient-change criterion was not met: ", diagnostics$termination, call. = FALSE)
+  list(phi = phi.result, rss.v = rss.v, diagnostics = diagnostics)
 }
 
 logsumchoose <- function(q, vec) {
@@ -190,6 +263,7 @@ InverseLinfty <- function(sigma, n, resol = 1.5,
 #' @export
 remMap.grid <- function(X, Y, standardize = TRUE,
                         n.lambda = 10, lambda.min.ratio = 0.01) {
+  .validate_xy(X, Y, standardize)
 
   q <- dim(Y)[2]
 
@@ -212,7 +286,7 @@ remMap.grid <- function(X, Y, standardize = TRUE,
 #' Fit one \code{remMap} model
 #'
 #' Fit \code{remMap} for a single pair (\code{lambda1}, \code{lambda2}), serving as a helper function for
-#' \code{remMap.all} to facilitate for parallelization.
+#' \code{remMap.whole} to facilitate for parallelization.
 #'
 #' @param X A size \eqn{n \times p} matrix of predictors (e.g., genetic variants). Missing values are not allowed
 #' @param Y A size \eqn{n \times q} matrix of outcomes (e.g., continuous omics traits). Missing values are not allowed
@@ -227,22 +301,26 @@ remMap.grid <- function(X, Y, standardize = TRUE,
 #'   }
 #'   If \code{null}, all entries are penalized (1) by default
 #'
-#' @return A \eqn{q \times p} coefficient matrix, \code{Theta0}
+#' @param diagnostics If TRUE, return a list with Theta0 and native stopping diagnostics. Default FALSE preserves the matrix return.
+#' @return A \eqn{q \times p} coefficient matrix, \code{Theta0}; or a list when diagnostics is TRUE. Native iterations count coordinate updates, not full sweeps. A coefficient-change criterion is not an optimality certificate.
 #'
 #' @export
 remMap.one <- function(X, Y, standardize = TRUE,
-                       lambda1, lambda2, C = NULL) {
+                       lambda1, lambda2, C = NULL, diagnostics = FALSE) {
+
+  .validate_xy(X, Y, standardize)
+  .validate_penalty(lambda1, lambda2, C, ncol(Y), ncol(X))
+  if (!is.logical(diagnostics) || length(diagnostics) != 1L || is.na(diagnostics))
+    stop("diagnostics must be TRUE or FALSE.", call. = FALSE)
 
   if (standardize == TRUE) {
     X <- scale(X)
     Y <- scale(Y)
   }
 
-  if (is.null(C)) {
-    Theta0 <- t(remMap(X, Y, lambda1, lambda2)$phi)
-  } else {
-    Theta0 <- t(remMap(X, Y, lambda1, lambda2, C.m = t(C))$phi)
-  }
+  fit <- remMap(X, Y, lambda1, lambda2, C.m = if (is.null(C)) NULL else t(C))
+  Theta0 <- t(fit$phi)
+  if (diagnostics) return(list(Theta0 = Theta0, diagnostics = fit$diagnostics))
 
   return(Theta0)
 }
@@ -253,7 +331,7 @@ remMap.one <- function(X, Y, standardize = TRUE,
 #'
 #' @param X A size \eqn{n \times p} matrix of predictors (e.g., genetic variants). Missing values are not allowed
 #' @param Y A size \eqn{n \times q} matrix of outcomes (e.g., continuous omics traits). Missing values are not allowed
-#' @param Theta0 A \eqn{q \times q} coefficient matrix
+#' @param Theta0 A \eqn{q \times p} coefficient matrix
 #' @param standardize A logical indicating whether to standardize \code{X} and \code{Y} by column. Default is \code{TRUE}
 #' @param gamma A numeric value in \([0, 1]\) for the EBIC hyperparameter. When \code{gamma = 0}, EBIC reduces to the ordinary BIC. Default is \code{1}
 #'
@@ -308,6 +386,7 @@ remMap.EBIC <- function(X, Y, Theta0, standardize = TRUE,
 remMap.whole <- function(X, Y, standardize = TRUE,
                          n.lambda = 10, lambda.min.ratio = 0.01,
                          C = NULL, gamma = 1) {
+  .validate_xy(X, Y, standardize)
 
   n <- dim(Y)[1]
   q <- dim(Y)[2]
@@ -397,7 +476,7 @@ precM.glasso <- function(X, standardize = TRUE,
 #' Estimate one row of precision matrix via Nodewise Lasso
 #'
 #' Estimates one row of the precision matrix via Nodewise Lasso, serving as a helper function
-#' for \code{precM.NL.all} to facilitate parallelization.
+#' for \code{precM.NL.whole} to facilitate parallelization.
 #'
 #' @param X A size \eqn{n \times p} matrix of predictors (e.g., genetic variants). Missing values are not allowed
 #' @param row.idx An integer from 1 to \eqn{p} indicating which row of the precision matrix to estimate.
@@ -536,7 +615,7 @@ precM <- function(X, method = "glasso", standardize = TRUE) {
 #' @param lambda2.opt The chosen group-lasso tuning parameter from \code{remMap.whole}
 #' @param K An optional size \eqn{n \times n} kinship matrix. Default is \code{NULL}
 #' @param standardize A logical indicating whether to standardize \code{X} and \code{Y} by column. Default is \code{TRUE}
-#' #' @param rotate Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"none"})
+#' @param rotate Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"none"})
 #' @param scores Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})
 #' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
 #'
@@ -550,6 +629,8 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
                         rotate = "none",
                         scores = "regression",
                         fm = "ml") {
+  .validate_factor_inputs(X, Y, Theta0, precM, k, K)
+  .validate_xy(X, Y, standardize)
 
   n <- dim(X)[1]
 
@@ -562,6 +643,8 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
     eigen.res <- eigen(K)
     U <- eigen.res$vectors
     d <- eigen.res$values
+    if (any(!is.finite(d)) || any(d <= 0))
+      stop("K must have strictly positive eigenvalues.", call. = FALSE)
     X <- t(U) %*% X
     Y <- t(U) %*% Y
   } else {
@@ -584,7 +667,7 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
 #' Fit one \code{DrFARM} model
 #'
 #' Fit \code{DrFARM} for a single pair (\code{lambda1}, \code{lambda2}), serving as a helper function for
-#' \code{DrFARM.all} to facilitate for parallelization.
+#' \code{DrFARM.whole} to facilitate for parallelization.
 #'
 #' @param X A size \eqn{n \times p} matrix of predictors (e.g., genetic variants). Missing values are not allowed
 #' @param Y A size \eqn{n \times q} matrix of outcomes (e.g., continuous omics traits). Missing values are not allowed
@@ -607,12 +690,21 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
 #' @param scores Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})
 #' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
 #' @param print.iter A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}
+#' @param max.iter Maximum attempted outer iterations, a positive integer or Inf. Default Inf preserves the historical stopping path; use a finite budget for bounded jobs.
+#' @details Diagnostics distinguish loss_tolerance, loss_increase and max_iter.
+#' The historical monitored loss is not certified to be the observed-data likelihood
+#' or the exact M-step objective for unequal uniquenesses. On loss increase the
+#' historical trial is returned; it is not rolled back or called converged.
+#' E.Z contains the last E-step scores and, for non-NULL K, is in the K eigenbasis.
+#' The historical whole-grid K selection path remains unresolved; use care with
+#' non-NULL K. Failed stopping criteria remain eligible in historical grid selection.
 #'
 #' @return A list containing:
 #' \item{Theta}{A size \eqn{q \times p} coefficient matrix}
 #' \item{B}{A size \eqn{q \times k} factor loading matrix}
 #' \item{E.Z}{A size \eqn{n \times k} latent factor score matrix}
 #' \item{diag.Psi}{A length-\eqn{q} vector of uniquenesses (diagonal of \eqn{\Psi}).}
+#' \item{diagnostics}{Stopping status, attempted iteration count, monitored loss and loss change, thresholds and inner status. Converged means only that the stated stopping criteria were met.}
 #'
 #' @export
 DrFARM.one <- function(X, Y, Theta0, precM, k,
@@ -623,7 +715,11 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
                        rotate = "none",
                        scores = "regression",
                        fm = "ml",
-                       print.iter = FALSE) {
+                       print.iter = FALSE, max.iter = Inf) {
+  .validate_stopping(thres, max.iter)
+  .validate_penalty(lambda1, lambda2, C, ncol(Y), ncol(X))
+  .validate_factor_inputs(X, Y, Theta0, precM, k, K)
+  .validate_xy(X, Y, standardize)
 
   n <- dim(X)[1]
   p <- dim(X)[2]
@@ -638,6 +734,8 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
     eigen.res <- eigen(K)
     U <- eigen.res$vectors
     d <- eigen.res$values
+    if (any(!is.finite(d)) || any(d <= 0))
+      stop("K must have strictly positive eigenvalues.", call. = FALSE)
     X <- t(U) %*% X
     Y <- t(U) %*% Y
   } else {
@@ -653,6 +751,8 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
   fa.res <- fa(E.star, nfactors = k, rotate = rotate, scores = scores, fm = fm, covar = TRUE)
   B <- fa.res$loadings
   diag.Psi <- fa.res$uniquenesses
+  if (any(!is.finite(diag.Psi)) || any(diag.Psi <= 0))
+    stop("DrFARM requires positive finite uniquenesses.", call. = FALSE)
   Psi.Inv <- diag(1/diag.Psi)
   PsiInv.B <- Psi.Inv %*% B
   Bt.PsiInv.B <- t(B) %*% Psi.Inv %*% B
@@ -672,7 +772,10 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
   prev.B <- B
   prev.Psi <- diag.Psi
 
-  while (diff > thres) {
+  attempted <- 0L
+  inner.converged <- TRUE
+  while (diff > thres && attempted < max.iter) {
+    attempted <- attempted + 1L
     iter <- iter + 1
     e <- Y - X %*% Theta.t
 
@@ -695,12 +798,14 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
 
     Y.aug <- Y - t(B %*% E.zt)
     if (is.null(C)) {
-      Theta.t <- remMap(X.m = X, Y.m = Y.aug, lamL1 = lambda1, lamL2 = lambda2,
-                        phi0 = prev.Theta.t, C.m = NULL, sigma = diag.Psi)$phi
+      inner.fit <- remMap(X.m = X, Y.m = Y.aug, lamL1 = lambda1, lamL2 = lambda2,
+                        phi0 = prev.Theta.t, C.m = NULL, sigma = diag.Psi)
     } else {
-      Theta.t <- remMap(X.m = X, Y.m = Y.aug, lamL1 = lambda1, lamL2 = lambda2,
-                        phi0 = prev.Theta.t, C.m = t(C), sigma = diag.Psi)$phi
+      inner.fit <- remMap(X.m = X, Y.m = Y.aug, lamL1 = lambda1, lamL2 = lambda2,
+                        phi0 = prev.Theta.t, C.m = t(C), sigma = diag.Psi)
     }
+    Theta.t <- inner.fit$phi
+    inner.converged <- inner.converged && isTRUE(inner.fit$diagnostics$converged)
     e <- Y - X %*% Theta.t
     Theta.db.t <- Theta.t + (precM %*% crossprod(X, Y.aug - X %*% Theta.t)) / n
     E.star <- Y - X %*% Theta.db.t
@@ -709,6 +814,8 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
     EET.star <- t(E.star) %*% E.star
 
     diag.Psi <- diag(EET.star - B %*% E.zt %*% E.star)/n
+    if (any(!is.finite(diag.Psi)) || any(diag.Psi <= 0))
+      stop("DrFARM update produced nonpositive or nonfinite uniquenesses.", call. = FALSE)
     Psi.Inv <- diag(1/diag.Psi)
     PsiInv.B <- Psi.Inv %*% B
     Bt.PsiInv.B <- t(B) %*% Psi.Inv %*% B
@@ -723,6 +830,8 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
       lambda1 * sum(abs(Theta.t)) +
       lambda2 * sum(sqrt(rowSums(Theta.t^2))) +
       n * sum(log(diag.Psi)) / 2
+
+    if (!is.finite(loss)) stop("DrFARM update produced nonfinite loss.", call. = FALSE)
 
     # Optional iteration messages
     if (print.iter) {
@@ -744,7 +853,16 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
     diag.Psi <- prev.Psi
   }
 
-  return(list(Theta = t(Theta.t), B = B, E.Z = t(E.zt), diag.Psi = diag.Psi))
+  termination <- if (diff < 0) "loss_increase" else if (diff <= thres) "loss_tolerance" else "max_iter"
+  converged <- identical(termination, "loss_tolerance") && inner.converged
+  diagnostics <- list(converged = converged, termination = termination,
+                      iterations = attempted, loss = prev.loss, loss.change = diff,
+                      threshold = thres, max.iter = max.iter, inner.converged = inner.converged,
+                      criterion = "historical loss change; not a KKT or likelihood certificate")
+  if (!converged) warning("DrFARM stopped: ", termination,
+                         "; inspect diagnostics before inference. Historical trial output is retained.", call. = FALSE)
+  return(list(Theta = t(Theta.t), B = B, E.Z = t(E.zt), diag.Psi = diag.Psi,
+              diagnostics = diagnostics))
 }
 
 #' Compute EBIC for \code{DrFARM}
@@ -779,6 +897,8 @@ DrFARM.EBIC <- function(X, Y, Theta, B, E.Z, diag.Psi, K = NULL,
     eigen.res <- eigen(K)
     U <- eigen.res$vectors
     d <- eigen.res$values
+    if (any(!is.finite(d)) || any(d <= 0))
+      stop("K must have strictly positive eigenvalues.", call. = FALSE)
     X <- t(U) %*% X
     Y <- t(U) %*% Y
   }
@@ -820,14 +940,25 @@ DrFARM.EBIC <- function(X, Y, Theta, B, E.Z, diag.Psi, K = NULL,
 #' @param scores Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"regression"})
 #' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
 #' @param print.iter A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}
+#' @param max.iter Maximum attempted outer iterations, a positive integer or Inf. Default Inf preserves the historical stopping path; use a finite budget for bounded jobs.
+#' @details Diagnostics distinguish loss_tolerance, loss_increase and max_iter.
+#' The historical monitored loss is not certified to be the observed-data likelihood
+#' or the exact M-step objective for unequal uniquenesses. On loss increase the
+#' historical trial is returned; it is not rolled back or called converged.
+#' E.Z contains the last E-step scores and, for non-NULL K, is in the K eigenbasis.
+#' The historical whole-grid K selection path remains unresolved; use care with
+#' non-NULL K. Failed stopping criteria remain eligible in historical grid selection.
 #'
 #' @return A list containing:
 #' \item{Theta}{The EBIC-chosen \eqn{q \times p} coefficient matrix}
 #' \item{B}{A size \eqn{q \times k} factor loading matrix}
 #' \item{E.Z}{A size \eqn{n \times k} latent factor score matrix}
 #' \item{diag.Psi}{A length-\eqn{q} vector of uniquenesses (diagonal of \eqn{\Psi}).}
+#' \item{diagnostics}{Stopping status, attempted iteration count, monitored loss and loss change, thresholds and inner status. Converged means only that the stated stopping criteria were met.}
 #' \item{lambda1.opt}{Optimal \eqn{\lambda_1} value}
 #' \item{lambda2.opt}{Optimal \eqn{\lambda_2} value}
+#' \item{grid.diagnostics}{Candidate penalties, historical EBIC and stopping status in original grid order.}
+#' \item{selected.index}{First EBIC-minimizing grid row, preserving historical tie-breaking.}
 #'
 #' @export
 DrFARM.whole <- function(X, Y, Theta0, precM, k,
@@ -839,7 +970,11 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
                          rotate = "none",
                          scores = "regression",
                          fm = "ml",
-                         print.iter = FALSE) {
+                         print.iter = FALSE, max.iter = Inf) {
+  .validate_stopping(thres, max.iter)
+  .validate_penalty(lambda1.opt, lambda2.opt, C, ncol(Y), ncol(X))
+  .validate_factor_inputs(X, Y, Theta0, precM, k, K)
+  .validate_xy(X, Y, standardize)
 
   n <- dim(X)[1]
   p <- dim(X)[2]
@@ -868,7 +1003,7 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
                           DrFARM.lambda.grid[i,1], DrFARM.lambda.grid[i,2],
                           K = K, C = C, standardize = FALSE,
                           thres = thres, rotate = rotate,
-                          scores = scores, fm = fm, print.iter = print.iter)
+                          scores = scores, fm = fm, print.iter = print.iter, max.iter = max.iter)
   }
 
   EBIC.vec <- rep(NA, n.lambda.sq)
@@ -887,7 +1022,12 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
               E.Z = ls[[opt.idx]]$E.Z,
               diag.Psi = ls[[opt.idx]]$diag.Psi,
               lambda1.opt = DrFARM.lambda.grid[opt.idx,1],
-              lambda2.opt = DrFARM.lambda.grid[opt.idx,2]))
+              lambda2.opt = DrFARM.lambda.grid[opt.idx,2],
+              diagnostics = ls[[opt.idx]]$diagnostics,
+              grid.diagnostics = data.frame(DrFARM.lambda.grid, EBIC = EBIC.vec,
+                converged = vapply(ls, function(x) x$diagnostics$converged, logical(1)),
+                termination = vapply(ls, function(x) x$diagnostics$termination, character(1))),
+              selected.index = opt.idx))
 }
 
 #' Compute entrywise p-values for DrFARM
@@ -907,6 +1047,7 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
 #' @export
 entry.pvalue <- function(X, Y, Theta, B, E.Z, precM,
                          standardize = TRUE) {
+  .validate_inference(X, Y, Theta, B, E.Z, precM, standardize)
 
   n <- dim(X)[1]
   p <- dim(X)[2]
@@ -924,10 +1065,16 @@ entry.pvalue <- function(X, Y, Theta, B, E.Z, precM,
 
   s <- colSums(Theta.t != 0)
   sses <- colSums((Y - X %*% Theta.t - E.Z %*% t(B))^2)
+  if (any(n - s <= 0)) stop("Residual degrees of freedom n - s must be positive.", call. = FALSE)
   Psi.star <- sses / (n - s)
+  if (any(!is.finite(Psi.star)) || any(Psi.star <= 0))
+    stop("Residual variances must be positive and finite.", call. = FALSE)
 
   CovM <- crossprod(X) / n
-  sqrtPhi <- sqrt(diag(precM %*% CovM %*% t(precM)))
+  variance.factor <- diag(precM %*% CovM %*% t(precM))
+  if (any(!is.finite(variance.factor)) || any(variance.factor <= 0))
+    stop("Sandwich variance factors must be positive and finite.", call. = FALSE)
+  sqrtPhi <- sqrt(variance.factor)
 
   Z <- matrix(NA, p, q)
   for (i in 1:q) {
@@ -940,8 +1087,13 @@ entry.pvalue <- function(X, Y, Theta, B, E.Z, precM,
 
 #' Compute group p-values for DrFARM
 #'
-#' Computes group-level p-values via the Cauchy combination test, providing a single p-value per predictor
-#' across all outcomes.
+#' Computes the historical two-sided Cauchy-tail combination, one value per predictor.
+#' @details The formula is T = mean(cot(pi * p)) across entry p-values, followed
+#' by 2 * pcauchy(-abs(T)). This is retained for compatibility; it is not the
+#' conventional one-sided Cauchy combination. In particular, equal p-values
+#' approaching either zero or one can yield small combined values. Boundary
+#' underflow/cancellation and calibration are unresolved. No generalized-response
+#' inference or kinship-adjusted inference is provided by this function.
 #'
 #' @param X A size \eqn{n \times p} matrix of predictors (e.g., genetic variants). Missing values are not allowed
 #' @param Y A size \eqn{n \times q} matrix of outcomes (e.g., continuous omics traits). Missing values are not allowed
@@ -956,6 +1108,7 @@ entry.pvalue <- function(X, Y, Theta, B, E.Z, precM,
 #' @export
 pleio.pvalue <- function(X, Y, Theta, B, E.Z, precM,
                          standardize = TRUE) {
+  .validate_inference(X, Y, Theta, B, E.Z, precM, standardize)
 
   n <- dim(X)[1]
   p <- dim(X)[2]
@@ -973,10 +1126,16 @@ pleio.pvalue <- function(X, Y, Theta, B, E.Z, precM,
 
   s <- colSums(Theta.t != 0)
   sses <- colSums((Y - X %*% Theta.t - E.Z %*% t(B))^2)
+  if (any(n - s <= 0)) stop("Residual degrees of freedom n - s must be positive.", call. = FALSE)
   Psi.star <- sses / (n - s)
+  if (any(!is.finite(Psi.star)) || any(Psi.star <= 0))
+    stop("Residual variances must be positive and finite.", call. = FALSE)
 
   CovM <- crossprod(X) / n
-  sqrtPhi <- sqrt(diag(precM %*% CovM %*% t(precM)))
+  variance.factor <- diag(precM %*% CovM %*% t(precM))
+  if (any(!is.finite(variance.factor)) || any(variance.factor <= 0))
+    stop("Sandwich variance factors must be positive and finite.", call. = FALSE)
+  sqrtPhi <- sqrt(variance.factor)
 
   Z <- matrix(NA, p, q)
   for (i in 1:q) {

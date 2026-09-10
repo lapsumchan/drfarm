@@ -4,7 +4,15 @@
 \alias{remMap.one}
 \title{Fit one \code{remMap} model}
 \usage{
-remMap.one(X, Y, standardize = TRUE, lambda1, lambda2, C = NULL)
+remMap.one(
+  X,
+  Y,
+  standardize = TRUE,
+  lambda1,
+  lambda2,
+  C = NULL,
+  diagnostics = FALSE
+)
 }
 \arguments{
 \item{X}{A size \eqn{n \times p} matrix of predictors (e.g., genetic variants). Missing values are not allowed}
@@ -24,11 +32,13 @@ remMap.one(X, Y, standardize = TRUE, lambda1, lambda2, C = NULL)
   \item 2 = unpenalized
 }
 If \code{null}, all entries are penalized (1) by default}
+
+\item{diagnostics}{If TRUE, return a list with Theta0 and native stopping diagnostics. Default FALSE preserves the matrix return.}
 }
 \value{
-A \eqn{q \times p} coefficient matrix, \code{Theta0}
+A \eqn{q \times p} coefficient matrix, \code{Theta0}; or a list when diagnostics is TRUE. Native iterations count coordinate updates, not full sweeps. A coefficient-change criterion is not an optimality certificate.
 }
 \description{
 Fit \code{remMap} for a single pair (\code{lambda1}, \code{lambda2}), serving as a helper function for
-\code{remMap.all} to facilitate for parallelization.
+\code{remMap.whole} to facilitate for parallelization.
 }

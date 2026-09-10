@@ -1,0 +1,68 @@
+name: R-CMD-check
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+      VECLIB_MAXIMUM_THREADS: 1
+      R_KEEP_PKG_SOURCE: yes
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3.3'
+      - uses: r-lib/actions/setup-pandoc@v2
+      - name: Install recorded dependency versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          Rscript --vanilla tools/install-dependencies.R 2>&1 | tee ci-logs/dependencies.log
+          Rscript --vanilla -e 'sessionInfo(); write.csv(installed.packages()[, c("Package", "Version", "Built")], "ci-logs/installed-packages.csv", row.names = FALSE)' > ci-logs/session.log 2>&1
+      - name: Install the candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          R CMD INSTALL . 2>&1 | tee ci-logs/install.log
+      - name: Run the bounded quickstart
+        shell: bash
+        run: |
+          set -euo pipefail
+          Rscript --vanilla inst/examples/quickstart.R 2>&1 | tee ci-logs/quickstart.log
+      - name: Build source package and vignette
+        shell: bash
+        run: |
+          set -euo pipefail
+          R CMD build . 2>&1 | tee ci-logs/build.log
+      - name: Check the source package
+        shell: bash
+        run: |
+          set -euo pipefail
+          R CMD check --no-manual drfarm_*.tar.gz 2>&1 | tee ci-logs/check.log
+          if grep -Eq '^Status:.*(ERROR|WARNING)' drfarm.Rcheck/00check.log; then
+            exit 1
+          fi
+      - name: Retain logs, including failed runs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: R-4.3.3-check-evidence
+          path: |
+            ci-logs/
+            drfarm.Rcheck/
+          if-no-files-found: warn
+          retention-days: 14
