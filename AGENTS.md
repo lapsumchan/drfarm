@@ -1,6 +1,6 @@
 # DrFARM: instructions for coding agents
 
-This is the DrFARM package lane for Student W. Read existing ancestor/nested instructions and retain applicable project rules. Current user instructions and authorization take precedence over this draft.
+This repository contains the DrFARM R package. Read existing ancestor/nested instructions and retain applicable project rules. Current user instructions and authorization take precedence over this draft.
 
 Before implementation, read `docs/agent/PROJECT_INSTRUCTIONS.md`, `docs/agent/CHECKPOINT.md` and `docs/agent/PACKAGE_CHECKS.md`. For substantive mathematical/numerical changes, consult `docs/agent/PLUMBING_STANDARD.md` and select the applicable checks. Record target → rewrite → justification → finite computation → output meaning. Use `docs/agent/EVIDENCE_TEMPLATE.md` for a concise evidence record, with PASS / FAIL / NOT RUN / N/A and exact evidence. Do not equate written tests with executed results or tests with a statistical theorem.
 

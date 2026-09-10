@@ -1,6 +1,6 @@
 # Weighted coefficient update: objective and implementation contract
 
-Author: Student W. This developer note describes a separately named coefficient
+Author: Lap Sum Chan. This developer note describes a separately named coefficient
 solver. Original package authorship and historical numerical behavior remain
 unchanged. It does not establish a new DrFARM inferential result.
 

@@ -1,6 +1,6 @@
 # Gaussian ECM optimization reference
 
-Author: Student W. This is a separately named optimization baseline for a
+Author: Lap Sum Chan. This is a separately named optimization baseline for a
 specified Gaussian penalized likelihood. It is a changed estimation procedure;
 it does not replace DrFARM or inherit DrFARM's inferential claims.
 

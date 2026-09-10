@@ -1,6 +1,6 @@
 # What the current outer DrFARM algorithm optimizes
 
-Author: Student W. Source under study: `44e6a012e64d08040bd01276b79913183fef5299`
+Author: Lap Sum Chan. Source under study: `44e6a012e64d08040bd01276b79913183fef5299`
 (development version 0.1.0.9001). This is a reconciliation of existing operations;
 the historical and weighted fitting paths are preserved.
 

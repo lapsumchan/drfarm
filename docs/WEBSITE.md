@@ -83,8 +83,8 @@ It requires a prior decision to publish this candidate, an approved merge, and
 repository Pages configured to use GitHub Actions. The default input is false;
 a local build or an ordinary merge does not enable public Pages.
 
-The proposed site is the package documentation at
-`https://lapsumchan.github.io/drfarm/`, not Student W's personal website.
+The proposed package documentation URL is
+`https://lapsumchan.github.io/drfarm/`.
 The 0.1.0.9002 development source includes the weighted coefficient path,
 Gaussian ECM reference, finite-budget diagnostics, tests and maintenance docs;
 the separately archived historical 0.1.0 source does not. Review their distinct
