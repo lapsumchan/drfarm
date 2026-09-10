@@ -4,6 +4,7 @@
 ^\.github$
 ^AGENTS\.md$
 ^CONTRIBUTING\.md$
+^CITATION\.cff$
 ^docs$
 ^DRFARM_SOFTWARE_CHECKPOINT\.md$
 ^evidence$

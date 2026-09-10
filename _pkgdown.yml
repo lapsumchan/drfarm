@@ -28,14 +28,24 @@ home:
   links:
     - text: Source repository
       href: https://github.com/lapsumchan/drfarm
+    - text: Nature Communications paper
+      href: https://doi.org/10.1038/s41467-025-60439-4
+    - text: Archived code · 0.1.0
+      href: https://doi.org/10.5281/zenodo.15252156
 navbar:
   structure:
-    left: [intro, reference, methods, news]
+    left: [intro, reference, methods, citation, news]
     right: [github]
   components:
     intro:
       text: Get started
       href: articles/getting-started.html
+    reference:
+      text: Function reference
+      href: reference/index.html
+    citation:
+      text: Cite DrFARM
+      href: authors.html#citation
     methods:
       text: Methods & status
       href: articles/methods-status.html

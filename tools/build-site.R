@@ -20,7 +20,7 @@ copy <- function(from, to) {
   } else if (!file.copy(from, to, overwrite = TRUE)) stop("Copy failed: ", from)
 }
 public <- c("DESCRIPTION", "NAMESPACE", "README.md", "NEWS.md", "LICENSE.md",
-            "CONTRIBUTING.md", ".Rbuildignore", "_pkgdown.yml", "R", "src", "man",
+            "CONTRIBUTING.md", "CITATION.cff", ".Rbuildignore", "_pkgdown.yml", "R", "src", "man",
             "data", "inst", "tests", "vignettes", "pkgdown", "tools")
 for (name in public) copy(file.path(root, name), file.path(stage, name))
 unlink(list.files(file.path(stage, "src"), pattern = "\\.(o|so|dll)$", full.names = TRUE))
@@ -46,7 +46,8 @@ links <- c("vignettes/getting-started.Rmd" = "articles/getting-started.html",
            "vignettes/articles/methods-status.Rmd" = "articles/methods-status.html",
            "inst/CITATION" = "authors.html#citation", "LICENSE.md" = "LICENSE.html",
            "NEWS.md" = "news/index.html", "CONTRIBUTING.md" = "CONTRIBUTING.html",
-           "docs/WEBSITE.md" = "WEBSITE.html", "docs/KNOWN_ISSUES.md" = "KNOWN_ISSUES.html")
+           "docs/WEBSITE.md" = "WEBSITE.html", "docs/CITING.md" = "CITING.html",
+           "docs/KNOWN_ISSUES.md" = "KNOWN_ISSUES.html")
 for (old in names(links)) readme <- gsub(paste0("](", old, ")"), paste0("](", links[[old]], ")"), readme, fixed = TRUE)
 writeLines(readme, file.path(stage, "README.md"))
 assets <- file.path(stage, "pkgdown/assets")
@@ -54,7 +55,7 @@ copy(archive, file.path(assets, "downloads", basename(archive)))
 for (name in list.files(file.path(root, "inst/examples")))
   copy(file.path(root, "inst/examples", name), file.path(assets, "downloads", name))
 copy(file.path(root, "tools/reproduce.R"), file.path(assets, "downloads/reproduce.R"))
-for (name in c("WEBSITE.md", "KNOWN_ISSUES.md", "GAUSSIAN_ECM_REFERENCE.md", "WEIGHTED_UPDATE.md", "OUTER_GAUSSIAN.md")) {
+for (name in c("WEBSITE.md", "CITING.md", "KNOWN_ISSUES.md", "GAUSSIAN_ECM_REFERENCE.md", "WEIGHTED_UPDATE.md", "OUTER_GAUSSIAN.md")) {
   copy(file.path(root, "docs", name), file.path(assets, "technical", name))
   # pkgdown renders these public technical notes with the same navigation/theme.
   # Add after R CMD build: they are website pages, not new package top-level files.

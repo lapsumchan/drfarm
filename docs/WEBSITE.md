@@ -1,5 +1,12 @@
 # Build and review the DrFARM documentation
 
+The existing GitHub repository and its README are the primary user-facing home.
+This optional site is a generated view of the same source, maintained in the same
+repository. Editing README changes the GitHub landing page after publication;
+rebuilding pkgdown updates the website. No second implementation or separate
+website repository is required. The “Function reference” menu is API help;
+“Cite DrFARM” contains scholarly/software citations.
+
 The site uses **pkgdown 2.0.7**, the package's README, Rd help, and two articles.
 Numerical R/Rcpp source is unchanged by this documentation sprint. The site is a
 review candidate; the configured destination is **https://lapsumchan.github.io/drfarm/**.

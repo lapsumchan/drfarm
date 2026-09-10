@@ -9,6 +9,12 @@ DrFARM combines sparse multivariate regression with latent response factors.
 It was developed for pleiotropy in multi-trait GWAS; observed predictors can
 also be non-genetic. The implementation is **R with Rcpp**.
 
+This repository is the project's home: start with this README, then use the
+[installation example](vignettes/getting-started.Rmd) and
+[methods and status](vignettes/articles/methods-status.Rmd). The optional package
+website is generated from these same files and the R help; it contains no second
+implementation.
+
 $$
 \underbrace{Y}_{\text{outcomes}} =
 \underbrace{X\Theta^\top}_{\text{observed predictors}} +
@@ -117,7 +123,20 @@ quickstart uses `K = NULL`. Lower objective values are not a global-optimum or
 inferential guarantee. Read [methods and limitations](vignettes/articles/methods-status.Rmd)
 before a scientific analysis.
 
-## Cite and contribute
+## Paper, archived code and software citation
+
+**Method paper:** Chan, L. S., Li, G., Fauman, E. B., Yin, X., Laakso, M.,
+Boehnke, M. & Song, P. X. K. (2025). *DrFARM: identification of pleiotropic
+genetic variants in genome-wide association studies.* Nature Communications,
+16, 5789. [doi:10.1038/s41467-025-60439-4](https://doi.org/10.1038/s41467-025-60439-4).
+
+**Historical code cited by the paper:** [DrFARM 0.1.0 on Zenodo](https://doi.org/10.5281/zenodo.15252156),
+archived from this repository's `0.1.0` release. It does not contain the newer
+development APIs documented here.
+
+For a reproducible analysis, cite the method **and the exact software version**
+used. A paper's historical code archive and this evolving development candidate
+are different records. See the [citation and release policy](docs/CITING.md).
 
 Package authors: **Lap Sum Chan, Gen Li and Peter X.K. Song**.
 Use `citation("drfarm")` to cite the installed software and version. The
@@ -125,7 +144,7 @@ Use `citation("drfarm")` to cite the installed software and version. The
 [changelog](NEWS.md), and [contribution guide](CONTRIBUTING.md) are included.
 Maintainer contact details are preserved in `DESCRIPTION`.
 
-For the local documentation build and proposed Pages publication path, see
+For the optional documentation build and proposed Pages publication path, see
 [building the package website](docs/WEBSITE.md).
 
 *Latent factors. Explicit assumptions.*
