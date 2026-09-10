@@ -9,11 +9,14 @@ DrFARM combines sparse multivariate regression with latent response factors.
 It was developed for pleiotropy in multi-trait GWAS; observed predictors can
 also be non-genetic. The implementation is **R with Rcpp**.
 
-This repository is the project's home: start with this README, then use the
+**Source versions:** `main` preserves the historical **0.1.0** package. The
+quickstart below installs the checked **0.1.0.9002 development version** from a
+pinned GitHub commit, including its explicitly labelled method options.
+
+Start with this README, then use the development
 [installation example](vignettes/getting-started.Rmd) and
-[methods and status](vignettes/articles/methods-status.Rmd). The optional package
-website is generated from these same files and the R help; it contains no second
-implementation.
+[methods and status](vignettes/articles/methods-status.Rmd). Those same development
+docs and R help generate the optional package website.
 
 $$
 \underbrace{Y}_{\text{outcomes}} =
@@ -54,7 +57,7 @@ install the checked development source from GitHub:
 ```r
 install.packages("remotes")
 remotes::install_github(
-  "lapsumchan/drfarm@310b502a2eadc073e095bff02c141dbeabc56b73",
+  "lapsumchan/drfarm@3ccf15176783ba7d0128c15403a2191e5491fd39",
   upgrade = "never"
 )
 ```

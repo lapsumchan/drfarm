@@ -28,7 +28,7 @@ The checked development source is available from GitHub:
 ```{r github-installation, eval=FALSE}
 install.packages("remotes")
 remotes::install_github(
-  "lapsumchan/drfarm@310b502a2eadc073e095bff02c141dbeabc56b73",
+  "lapsumchan/drfarm@3ccf15176783ba7d0128c15403a2191e5491fd39",
   upgrade = "never"
 )
 ```
@@ -39,7 +39,7 @@ versions, use a full source checkout:
 ```sh
 git clone https://github.com/lapsumchan/drfarm.git
 cd drfarm
-git checkout 310b502a2eadc073e095bff02c141dbeabc56b73
+git checkout 3ccf15176783ba7d0128c15403a2191e5491fd39
 Rscript --vanilla tools/install-dependencies.R
 R CMD INSTALL .
 ```
