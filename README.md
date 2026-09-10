@@ -14,8 +14,8 @@ quickstart below installs the checked **0.1.0.9002 development version** from a
 pinned GitHub commit, including its explicitly labelled method options.
 
 Start with this README, then use the development
-[installation example](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd) and
-[methods and status](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/articles/methods-status.Rmd). Those same development
+[installation example](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/vignettes/getting-started.Rmd) and
+[methods and status](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/vignettes/articles/methods-status.Rmd). Those same development
 docs and R help generate the optional package website.
 
 $$
@@ -46,7 +46,7 @@ low rank.
 
 All three paths use continuous Gaussian-response machinery. The ECM reference
 does not establish a generalized-response extension. There is no Python API.
-See [methods and status](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/articles/methods-status.Rmd) for the objectives,
+See [methods and status](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/vignettes/articles/methods-status.Rmd) for the objectives,
 assumptions and limits.
 
 ## Install the development version
@@ -57,14 +57,14 @@ install the checked development source from GitHub:
 ```r
 install.packages("remotes")
 remotes::install_github(
-  "lapsumchan/drfarm@310b502a2eadc073e095bff02c141dbeabc56b73",
+  "lapsumchan/drfarm@3ccf15176783ba7d0128c15403a2191e5491fd39",
   upgrade = "never"
 )
 ```
 
 The commit pins the source used for the local package checks and examples.
 For the recorded dependency versions, follow the source-checkout instructions
-in [Get started](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd). This development version has
+in [Get started](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/vignettes/getting-started.Rmd). This development version has
 no CRAN release or new Zenodo release DOI.
 
 For the publicly available **historical 0.1.0** source only:
@@ -76,7 +76,7 @@ remotes::install_github("lapsumchan/drfarm@be6d52ee796161e732f398da5eadfc3d40812
 
 That historical install does **not** contain `max.iter`, the new diagnostics,
 the weighted option or `gaussian.ecm.reference()` shown in this candidate's help.
-See [installation and troubleshooting](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd).
+See [installation and troubleshooting](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/vignettes/getting-started.Rmd).
 
 ## Run the bundled example
 
@@ -109,7 +109,7 @@ outcomes; they are not predictions for new participants.
 
 The recorded quickstart returns `loss_increase`, not convergence. The example
 is useful for learning the interface; its successful execution does not validate
-the fit for inference. [Get started](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd) explains the
+the fit for inference. [Get started](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/vignettes/getting-started.Rmd) explains the
 status, scale conversion, downloadable scripts and full original demonstration.
 
 ```r
@@ -126,7 +126,7 @@ fitting or evaluating inference. The original p-value routines are retained;
 the historical predictor combination uses a **two-sided Cauchy tail**, and an
 optional-kinship model-selection basis mismatch has been demonstrated. The
 quickstart uses `K = NULL`. Lower objective values are not a global-optimum or
-inferential guarantee. Read [methods and limitations](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/articles/methods-status.Rmd)
+inferential guarantee. Read [methods and limitations](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/vignettes/articles/methods-status.Rmd)
 before a scientific analysis.
 
 ## Paper, archived code and software citation
@@ -142,15 +142,15 @@ development APIs documented here.
 
 For a reproducible analysis, cite the method **and the exact software version**
 used. A paper's historical code archive and this evolving development candidate
-are different records. See the [citation and release policy](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/docs/CITING.md).
+are different records. See the [citation and release policy](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/docs/CITING.md).
 
 Package authors: **Lap Sum Chan, Gen Li and Peter X.K. Song**.
 Use `citation("drfarm")` to cite the installed software and version. The
-[citation record](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/inst/CITATION), [GPL ≥ 3 license and third-party notices](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/LICENSE.md),
-[changelog](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/NEWS.md), and [contribution guide](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/CONTRIBUTING.md) are included.
+[citation record](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/inst/CITATION), [GPL ≥ 3 license and third-party notices](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/LICENSE.md),
+[changelog](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/NEWS.md), and [contribution guide](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/CONTRIBUTING.md) are included.
 Maintainer contact details are preserved in `DESCRIPTION`.
 
 For the optional documentation build and proposed Pages publication path, see
-[building the package website](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/docs/WEBSITE.md).
+[building the package website](https://github.com/lapsumchan/drfarm/blob/a495ac299e555e53c12f24825b54fcec3f161122/docs/WEBSITE.md).
 
 *Latent factors. Explicit assumptions.*
