@@ -43,6 +43,11 @@ jobs:
         run: |
           set -euo pipefail
           Rscript --vanilla inst/examples/quickstart.R 2>&1 | tee ci-logs/quickstart.log
+      - name: Reconcile fixed Gaussian outer fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          Rscript --vanilla tools/reconcile-outer.R --output ci-logs/outer-objective 2>&1 | tee ci-logs/outer-objective-run.log
       - name: Build source package and vignette
         shell: bash
         run: |

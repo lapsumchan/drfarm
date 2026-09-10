@@ -22,6 +22,29 @@ checkout of the reference commit as PATH. Each program is externally bounded
 by the runner's timeout; an optional finite `max.iter` bounds attempted outer
 updates but not time spent inside an individual native update.
 
+## Outer Gaussian reconciliation: the covariance step uses a different coefficient
+
+Fixed small fixtures now distinguish the explicit latent Gaussian likelihood,
+its frozen-posterior expected complete-data objective, and the historical
+monitor. The monitor is a diagonal-noise regression score that omits latent
+covariance. The weighted coefficient step solves its conditional penalized
+objective, but inner debiasing changes the coefficient used by the factor and
+variance updates. Those covariance updates are valid conditional Gaussian
+minimizations at the debiased coefficient, while the returned coefficient is
+still sparse. The compressed variance expression correctly includes posterior
+uncertainty when evaluated with its matching optimized loadings and residual.
+
+Actual-code fixed-initializer traces reproduce an uphill complete step and a
+three-step `loss_tolerance` result with Gaussian variance gradient (-0.25,-0.25).
+A separate nonzero-factor stationary fixture is also moved uphill. These finite
+counterexamples rule out general Gaussian EM/GEM descent or stationarity claims
+for the current composition. They do not establish the absence of every possible
+alternative objective or refute the original inferential theory.
+
+See [OUTER_GAUSSIAN.md](OUTER_GAUSSIAN.md) for equations, exact fixtures,
+interpretation and the runnable `tools/reconcile-outer.R` diagnostic. Both fitting
+paths and their stopping/return behavior remain unchanged.
+
 ## Optional K: the score must use the same participant basis
 
 For a single fitted model with K, `DrFARM.one` returns scores in the eigenbasis
