@@ -1,7 +1,7 @@
 Package: drfarm
 Type: Package
 Title: Implementation of debiased-regularized factor analysis regression model (DrFARM)
-Version: 0.1.0.9000
+Version: 0.1.0.9001
 Date: 2026-09-09
 Authors@R:
     c(

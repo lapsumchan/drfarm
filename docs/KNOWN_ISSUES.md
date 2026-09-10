@@ -1,7 +1,7 @@
 # Known numerical issues and compatibility scope
 
 Reference source: `be6d52ee796161e732f398da5eadfc3d40812f34` (0.1.0).
-Maintenance candidate: 0.1.0.9000. Local diagnostic environment: R 4.3.3,
+Development candidate: 0.1.0.9001. Local diagnostic environment: R 4.3.3,
 glasso 1.11, glmnet 4.1-8, psych 2.4.1 and Rcpp 1.0.12. These are finite
 software/algorithm checks, not a new assessment of published inferential theory.
 
@@ -48,7 +48,7 @@ score calculations. The quickstart uses K=NULL.
 
 Consider one predictor with squared norm 1, ordinary least-squares coefficients
 a=(3,4), variance vector sigma=(1,2), entry penalty 0, and group penalty 1.
-Both the historical and candidate kernels return b=(2.4,2.4). For the natural
+The historical kernel, still the candidate default, returns b=(2.4,2.4). For the natural
 weighted objective
 
 `f(b) = sum((b-a)^2 / (2*sigma)) + sqrt(sum(b^2))`,
@@ -57,13 +57,29 @@ the gradient there is `(0.1071067812, -0.0928932188)`, not zero. The candidate
 native coefficient-change diagnostic nonetheless reports convergence with
 final delta zero. The radial shrinkage identity applies to equal response
 curvature; it does not justify this unequal-curvature step. This is a
-counterexample to that objective interpretation, not a newly implemented
-replacement or a claim about every possible objective.
+counterexample to that objective interpretation, not a claim about every
+possible objective.
 
 Run `Rscript --vanilla tools/diagnose-weighted-group.R PATH`, where PATH is an
 installed baseline or candidate R library. The script verifies the historical
 output and the nonzero analytic gradient. It is separate from the passing
-contract tests because this maintenance patch preserves the historical update.
+contract tests because the default preserves the historical update.
+
+The separately named `remMap.weighted()` solver in 0.1.0.9001 targets this
+explicit objective. On the same fixture it returns approximately
+b=(2.323269,2.527538), lowers the objective from 4.214113 to 4.204097, and
+has independently computed gradient infinity norm 2.22e-16 in the recorded
+R environment. It agrees with a separate scalar-root reference to 8.89e-16.
+Run `Rscript --vanilla tools/compare-weighted-update.R --library PATH --output
+NEW_PATH` to reproduce the counterexample and a matched small-grid comparison.
+See [WEIGHTED_UPDATE.md](WEIGHTED_UPDATE.md) for the precise target and limits.
+
+All 20 weighted inner coefficient solves in that matched comparison met the
+scaled KKT threshold 1e-8. All 20 outer fits across both update modes and two
+passes still stopped on `loss_increase`; both four-cell grids selected row 3.
+This demonstrates a coefficient-subproblem correction, not full-fit convergence.
+The inherited outer monitored loss also includes C=2 entries in its penalties,
+whereas the new coefficient objective excludes them; it is not the same target.
 
 ## Historical predictor combination has two tails
 

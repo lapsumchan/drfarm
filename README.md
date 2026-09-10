@@ -31,7 +31,7 @@ The historical `0.1.0` source is pinned at commit
 remotes::install_github("lapsumchan/drfarm@be6d52ee796161e732f398da5eadfc3d40812f34")
 ```
 
-This checkout is the `0.1.0.9000` maintenance candidate. To install it locally,
+This checkout is the `0.1.0.9001` development candidate. To install it locally,
 run `Rscript --vanilla tools/install-dependencies.R` for the recorded dependency
 versions, then `R CMD INSTALL .` from the checkout. The dependency installer
 includes the vignette tools. A development version
@@ -75,6 +75,37 @@ source(system.file("examples", "quickstart.R", package = "drfarm"))
 
 Use `vignette("getting-started", package = "drfarm")` when vignettes were built.
 Function reference pages are available through `help(package = "drfarm")`.
+
+## Opt-in update for unequal response variances
+
+`remMap.weighted()` solves a separately specified weighted sparse-group
+coefficient objective. It uses the supplied working scale without automatic
+standardization or an intercept; `sigma` contains response **variances**.
+The installed analytic example has unequal variances and both penalties:
+
+```r
+source(system.file("examples", "weighted-update.R", package = "drfarm"))
+```
+
+To use this coefficient update within the preceding DrFARM example:
+
+```r
+fit.weighted <- DrFARM.one(
+  X, Y, initial$Theta0, precision, k = 2,
+  lambda1 = initial$lambda1.opt, lambda2 = initial$lambda2.opt,
+  coefficient.update = "weighted",
+  weighted.control = list(tol = 1e-8, max.sweeps = 1000L),
+  max.iter = 1000
+)
+fit.weighted$diagnostics
+```
+
+The default remains `coefficient.update = "historical"`. Weighted mode monitors
+the coefficient objective's full KKT residual; a failed inner solve stops its
+DrFARM caller. The outer loss, debiasing, factor updates, and inference are
+separate: a converged coefficient update does not validate the complete fit or
+its p-values. See [the objective and derivation](docs/WEIGHTED_UPDATE.md) for
+mask semantics, penalty normalization, stopping rules, and scope.
 
 ## Shapes, scale, and fitted components
 
@@ -124,9 +155,11 @@ matching the coefficient scale.
 
 `DrFARM.one()` and `DrFARM.whole()` retain the historical default
 `max.iter = Inf`; specify a finite budget in new workflows. Inspect diagnostics
-before interpreting a fit. `converged = TRUE` requires the historical outer
-loss-change criterion and the inner coefficient-change criterion. It does not certify parameter stability, a KKT condition,
-or a global optimum. Loss increases and exhausted iteration budgets are
+before interpreting a fit. With `coefficient.update = "historical"`,
+`converged = TRUE` requires the historical outer loss-change criterion and the
+inner coefficient-change criterion. With `"weighted"`, the inner criterion is
+the full coefficient-objective KKT residual. Neither mode certifies parameter
+stability or a global optimum of the full DrFARM procedure. Loss increases and exhausted iteration budgets are
 reported explicitly. The historical trial-return behavior on a loss increase is
 preserved. `remMap.one(..., diagnostics = TRUE)` exposes the native iteration
 report; its default return remains the coefficient matrix.

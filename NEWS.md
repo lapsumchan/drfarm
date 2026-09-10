@@ -1,3 +1,29 @@
+# drfarm 0.1.0.9001
+
+* Add `remMap.weighted()` for an explicitly specified, fixed-variance weighted
+  sparse-group coefficient objective. It operates on the supplied working
+  scale, takes variances in `sigma`, and does not automatically standardize or
+  add an intercept. `C = 0` excludes an entry; `C = 2` exempts it from both the
+  entry penalty and the predictor group norm.
+* Use a monotone scalar root for unequal-curvature predictor blocks and report
+  full-objective KKT residuals, the objective trace, and termination information.
+  Finite coefficient/root budgets and unsuccessful solves remain explicit.
+* Add opt-in `coefficient.update = "weighted"` with `weighted.control` to
+  `DrFARM.one()` and `DrFARM.whole()`. The default `"historical"` retains the
+  original coefficient update. A nonconverged weighted inner solve stops its
+  outer caller; the standalone solver returns its last finite iterate with a
+  warning and status.
+* Add an installed analytic coefficient example and a developer derivation in
+  `docs/WEIGHTED_UPDATE.md`. These describe a coefficient-subproblem correction;
+  they do not establish convergence of the full DrFARM algorithm, repair
+  optional-K scoring or the historical predictor Cauchy formula, or introduce
+  generalized-response inference.
+
+Migration: weighted mode changes the coefficient objective's numerical update
+and can change estimates and tuning results. Select it explicitly, retain its
+controls and statuses with results, and keep comparisons with the historical
+mode identifiable. No historical numerical default is replaced.
+
 # drfarm 0.1.0.9000
 
 Development maintenance candidate based on public `0.1.0`, commit

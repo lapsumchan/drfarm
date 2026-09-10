@@ -691,6 +691,12 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
 #' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
 #' @param print.iter A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}
 #' @param max.iter Maximum attempted outer iterations, a positive integer or Inf. Default Inf preserves the historical stopping path; use a finite budget for bounded jobs.
+#' @param coefficient.update Either "historical" (default native update) or
+#'   "weighted" (opt-in fixed-variance coefficient objective, see
+#'   \code{remMap.weighted}). Other outer operations remain historical.
+#' @param weighted.control A control list passed to \code{remMap.weighted};
+#'   must be empty for the historical update. A failed weighted coefficient
+#'   subproblem raises an error instead of advancing the outer fit.
 #' @details Diagnostics distinguish loss_tolerance, loss_increase and max_iter.
 #' The historical monitored loss is not certified to be the observed-data likelihood
 #' or the exact M-step objective for unequal uniquenesses. On loss increase the
@@ -698,6 +704,10 @@ DrFARM.grid <- function(X, Y, Theta0, precM, k,
 #' E.Z contains the last E-step scores and, for non-NULL K, is in the K eigenbasis.
 #' The historical whole-grid K selection path remains unresolved; use care with
 #' non-NULL K. Failed stopping criteria remain eligible in historical grid selection.
+#' Weighted updates record each coefficient solve in diagnostics$coefficient.history.
+#' Their KKT criterion applies only to the fixed-factor, fixed-variance subproblem.
+#' Inference for the changed update has not been validated; do not interpret the
+#' historical p-value routines as validated inference for weighted fits.
 #'
 #' @return A list containing:
 #' \item{Theta}{A size \eqn{q \times p} coefficient matrix}
@@ -715,7 +725,15 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
                        rotate = "none",
                        scores = "regression",
                        fm = "ml",
-                       print.iter = FALSE, max.iter = Inf) {
+                       print.iter = FALSE, max.iter = Inf,
+                       coefficient.update = c("historical", "weighted"),
+                       weighted.control = list()) {
+  coefficient.update <- match.arg(coefficient.update)
+  if (coefficient.update == "weighted") {
+    weighted.control <- .weighted_control(weighted.control)
+  } else if (!is.list(weighted.control) || length(weighted.control)) {
+    stop("weighted.control requires coefficient.update = 'weighted'.", call. = FALSE)
+  }
   .validate_stopping(thres, max.iter)
   .validate_penalty(lambda1, lambda2, C, ncol(Y), ncol(X))
   .validate_factor_inputs(X, Y, Theta0, precM, k, K)
@@ -774,6 +792,7 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
 
   attempted <- 0L
   inner.converged <- TRUE
+  coefficient.history <- list()
   while (diff > thres && attempted < max.iter) {
     attempted <- attempted + 1L
     iter <- iter + 1
@@ -797,7 +816,16 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
     E.zzt.inv <- solve(E.zzt)
 
     Y.aug <- Y - t(B %*% E.zt)
-    if (is.null(C)) {
+    if (coefficient.update == "weighted") {
+      weighted.fit <- remMap.weighted(X, Y.aug, lambda1, lambda2,
+                       sigma = diag.Psi, C = C, Theta0 = t(prev.Theta.t),
+                       control = weighted.control)
+      coefficient.history[[attempted]] <- weighted.fit$diagnostics
+      if (!isTRUE(weighted.fit$diagnostics$converged))
+        stop("Weighted coefficient subproblem failed: ",
+             weighted.fit$diagnostics$termination, "; outer fit stopped.", call. = FALSE)
+      inner.fit <- list(phi = t(weighted.fit$Theta0), diagnostics = weighted.fit$diagnostics)
+    } else if (is.null(C)) {
       inner.fit <- remMap(X.m = X, Y.m = Y.aug, lamL1 = lambda1, lamL2 = lambda2,
                         phi0 = prev.Theta.t, C.m = NULL, sigma = diag.Psi)
     } else {
@@ -858,7 +886,11 @@ DrFARM.one <- function(X, Y, Theta0, precM, k,
   diagnostics <- list(converged = converged, termination = termination,
                       iterations = attempted, loss = prev.loss, loss.change = diff,
                       threshold = thres, max.iter = max.iter, inner.converged = inner.converged,
-                      criterion = "historical loss change; not a KKT or likelihood certificate")
+                      criterion = "historical loss change; not a KKT or likelihood certificate",
+                      coefficient.update = coefficient.update,
+                      coefficient.history = coefficient.history,
+                      inference.status = if (coefficient.update == "weighted")
+                        "unvalidated_for_weighted_update" else "historical_formulas")
   if (!converged) warning("DrFARM stopped: ", termination,
                          "; inspect diagnostics before inference. Historical trial output is retained.", call. = FALSE)
   return(list(Theta = t(Theta.t), B = B, E.Z = t(E.zt), diag.Psi = diag.Psi,
@@ -941,6 +973,12 @@ DrFARM.EBIC <- function(X, Y, Theta, B, E.Z, diag.Psi, K = NULL,
 #' @param fm Character string specifying factor analysis options, consistent with the \pkg{psych} package (e.g., \code{"ml"})
 #' @param print.iter A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}
 #' @param max.iter Maximum attempted outer iterations, a positive integer or Inf. Default Inf preserves the historical stopping path; use a finite budget for bounded jobs.
+#' @param coefficient.update Either "historical" (default native update) or
+#'   "weighted" (opt-in fixed-variance coefficient objective, see
+#'   \code{remMap.weighted}). Other outer operations remain historical.
+#' @param weighted.control A control list passed to \code{remMap.weighted};
+#'   must be empty for the historical update. A failed weighted coefficient
+#'   subproblem raises an error instead of advancing the outer fit.
 #' @details Diagnostics distinguish loss_tolerance, loss_increase and max_iter.
 #' The historical monitored loss is not certified to be the observed-data likelihood
 #' or the exact M-step objective for unequal uniquenesses. On loss increase the
@@ -948,6 +986,10 @@ DrFARM.EBIC <- function(X, Y, Theta, B, E.Z, diag.Psi, K = NULL,
 #' E.Z contains the last E-step scores and, for non-NULL K, is in the K eigenbasis.
 #' The historical whole-grid K selection path remains unresolved; use care with
 #' non-NULL K. Failed stopping criteria remain eligible in historical grid selection.
+#' Weighted updates record each coefficient solve in diagnostics$coefficient.history.
+#' Their KKT criterion applies only to the fixed-factor, fixed-variance subproblem.
+#' Inference for the changed update has not been validated; do not interpret the
+#' historical p-value routines as validated inference for weighted fits.
 #'
 #' @return A list containing:
 #' \item{Theta}{The EBIC-chosen \eqn{q \times p} coefficient matrix}
@@ -970,7 +1012,15 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
                          rotate = "none",
                          scores = "regression",
                          fm = "ml",
-                         print.iter = FALSE, max.iter = Inf) {
+                         print.iter = FALSE, max.iter = Inf,
+                         coefficient.update = c("historical", "weighted"),
+                         weighted.control = list()) {
+  coefficient.update <- match.arg(coefficient.update)
+  if (coefficient.update == "weighted") {
+    weighted.control <- .weighted_control(weighted.control)
+  } else if (!is.list(weighted.control) || length(weighted.control)) {
+    stop("weighted.control requires coefficient.update = 'weighted'.", call. = FALSE)
+  }
   .validate_stopping(thres, max.iter)
   .validate_penalty(lambda1.opt, lambda2.opt, C, ncol(Y), ncol(X))
   .validate_factor_inputs(X, Y, Theta0, precM, k, K)
@@ -1003,7 +1053,8 @@ DrFARM.whole <- function(X, Y, Theta0, precM, k,
                           DrFARM.lambda.grid[i,1], DrFARM.lambda.grid[i,2],
                           K = K, C = C, standardize = FALSE,
                           thres = thres, rotate = rotate,
-                          scores = scores, fm = fm, print.iter = print.iter, max.iter = max.iter)
+                          scores = scores, fm = fm, print.iter = print.iter, max.iter = max.iter,
+                          coefficient.update = coefficient.update, weighted.control = weighted.control)
   }
 
   EBIC.vec <- rep(NA, n.lambda.sq)

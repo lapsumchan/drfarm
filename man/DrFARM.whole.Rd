@@ -21,7 +21,9 @@ DrFARM.whole(
   scores = "regression",
   fm = "ml",
   print.iter = FALSE,
-  max.iter = Inf
+  max.iter = Inf,
+  coefficient.update = c("historical", "weighted"),
+  weighted.control = list()
 )
 }
 \arguments{
@@ -64,6 +66,14 @@ If \code{null}, all entries are penalized (1) by default}
 \item{print.iter}{A logical indicating whether to print iteration number and loss at each M-step. Default is \code{FALSE}}
 
 \item{max.iter}{Maximum attempted outer iterations, a positive integer or Inf. Default Inf preserves the historical stopping path; use a finite budget for bounded jobs.}
+
+\item{coefficient.update}{Either "historical" (default native update) or
+"weighted" (opt-in fixed-variance coefficient objective, see
+\code{remMap.weighted}). Other outer operations remain historical.}
+
+\item{weighted.control}{A control list passed to \code{remMap.weighted};
+must be empty for the historical update. A failed weighted coefficient
+subproblem raises an error instead of advancing the outer fit.}
 }
 \value{
 A list containing:
@@ -90,4 +100,8 @@ historical trial is returned; it is not rolled back or called converged.
 E.Z contains the last E-step scores and, for non-NULL K, is in the K eigenbasis.
 The historical whole-grid K selection path remains unresolved; use care with
 non-NULL K. Failed stopping criteria remain eligible in historical grid selection.
+Weighted updates record each coefficient solve in diagnostics$coefficient.history.
+Their KKT criterion applies only to the fixed-factor, fixed-variance subproblem.
+Inference for the changed update has not been validated; do not interpret the
+historical p-value routines as validated inference for weighted fits.
 }
