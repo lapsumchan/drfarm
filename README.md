@@ -1,52 +1,76 @@
-# drfarm
+# DrFARM
 
-Debiased-regularized factor analysis regression for multiple continuous outcomes.
+**Debiased-regularized factor analysis regression model**
 
-DrFARM estimates the associations of observed predictors while representing residual
-outcome dependence with latent factors:
+Which predictors are associated with several continuous outcomes—and which
+associations remain after accounting for shared residual variation?
+
+DrFARM combines sparse multivariate regression with latent response factors.
+It was developed for pleiotropy in multi-trait GWAS; observed predictors can
+also be non-genetic. The implementation is **R with Rcpp**.
 
 $$
-Y = X\Theta^T + ZB^T + E.
+\underbrace{Y}_{\text{outcomes}} =
+\underbrace{X\Theta^\top}_{\text{observed predictors}} +
+\underbrace{ZB^\top}_{\text{latent factors}} +
+\underbrace{E}_{\text{noise}}.
 $$
 
-The sparse-group penalty encourages both predictor-level and individual
-coefficient sparsity. The factors model the residual response component;
-`Theta` is the coefficient matrix for the observed predictors. The package
-contains the original continuous-response implementation in R and Rcpp.
-Generalized-response work is separate and is not implemented by this API.
+**Read it left to right:** observed predictors explain the mean; latent factors
+explain residual dependence between outcomes. The coefficient matrix
+$\Theta$ belongs to the observed predictors. It is **not** constrained to be
+low rank.
 
-## Install
+| Data or parameter | Shape | One row represents |
+|---|---|---|
+| `X` / `Y` | n × p / n × q | A participant |
+| `Theta` | q × p | An outcome; columns are predictors |
+| `B` / `E.Z` | q × k / n × k | An outcome / a participant |
 
-From R 4.3.0 or later, with a C++ compilation toolchain available:
+## Choose a method
+
+| Path | Use it for | Status and interpretation |
+|---|---|---|
+| **Historical DrFARM** · `DrFARM.one()` / `DrFARM.whole()` | The original fitting and debiasing procedure | Default path; inspect outer and inner stopping diagnostics before inference |
+| **Weighted coefficient option** · `coefficient.update = "weighted"` | A specified unequal-variance coefficient subproblem within DrFARM | Opt-in; inner debiasing remains; weighted inference is unvalidated |
+| **Gaussian ECM reference** · `gaussian.ecm.reference()` | Optimization of an explicit Gaussian penalized likelihood, with independent rows | Different estimator; no inner debiasing and no inference supplied |
+
+All three paths use continuous Gaussian-response machinery. The ECM reference
+does not establish a generalized-response extension. There is no Python API.
+See [methods and status](vignettes/articles/methods-status.Rmd) for the objectives,
+assumptions and limits.
+
+## Install this candidate
+
+This checkout documents **0.1.0.9002**. With R ≥ 4.3.0 and a C++ compiler, run
+these commands from the candidate source directory supplied in the review bundle
+or a checkout containing this README:
+
+```sh
+Rscript --vanilla tools/install-dependencies.R
+R CMD INSTALL .
+```
+
+The installer records exact dependency versions. The documentation site also
+provides a candidate source download in **Get started**. This candidate has not
+yet been published to CRAN or public GitHub main.
+
+For the publicly available **historical 0.1.0** source only:
 
 ```r
 install.packages("remotes")
-remotes::install_github("lapsumchan/drfarm")
-```
-
-The historical `0.1.0` source is pinned at commit
-`be6d52ee796161e732f398da5eadfc3d40812f34`:
-
-```r
 remotes::install_github("lapsumchan/drfarm@be6d52ee796161e732f398da5eadfc3d40812f34")
 ```
 
-This checkout is the `0.1.0.9002` development candidate. To install it locally,
-run `Rscript --vanilla tools/install-dependencies.R` for the recorded dependency
-versions, then `R CMD INSTALL .` from the checkout. The dependency installer
-includes the vignette tools. A development version
-in this checkout does not imply that GitHub or a package registry has released it.
+That historical install does **not** contain `max.iter`, the new diagnostics,
+the weighted option or `gaussian.ecm.reference()` shown in this candidate's help.
+See [installation and troubleshooting](vignettes/getting-started.Rmd).
 
-Compilation uses Rcpp. A missing compiler or dependency is an installation
-failure, not evidence about the statistical method. On a build failure, retain
-the full installation log and include `sessionInfo()` when reporting it. The CI
-definition targets R 4.3.3 on Linux; a workflow file alone is not evidence of a
-successful run or support on other environments.
+## Run the bundled example
 
-## A small installation-to-result example
-
-This example fits a deliberately small 2 by 2 remMap grid, then one DrFARM fit.
-It demonstrates the interface; it does not perform a full tuning analysis.
+After installing this candidate, this quickstart uses the original bundled
+data: **500 participants, 10 predictors and 5 outcomes**. It fits a small remMap
+initialization grid and one historical DrFARM model with two factors.
 
 ```r
 library(drfarm)
@@ -54,160 +78,54 @@ data("drfarm.dat", package = "drfarm")
 X <- drfarm.dat$X
 Y <- drfarm.dat$Y
 
+set.seed(20260909)
 initial <- remMap.whole(X, Y, n.lambda = 2)
 precision <- precM(X)
 fit <- DrFARM.one(
   X, Y, initial$Theta0, precision, k = 2,
   lambda1 = initial$lambda1.opt, lambda2 = initial$lambda2.opt,
-  max.iter = 1000
+  standardize = TRUE, thres = 1e-4, max.iter = 1000
 )
 fit$diagnostics
-fit$Theta
+dim(fit$Theta)  # 5 outcomes × 10 predictors
 ```
 
-The finite `max.iter` argument and diagnostics require this maintenance
-candidate. A full script, including scale conversion and dimension checks, is
-installed with the package:
+`Theta[r, j]` describes predictor j's association with outcome r on the
+**standardized scale**. By default, X and Y are centered and divided by their
+column sample standard deviations. Factor scores use the observed training
+outcomes; they are not predictions for new participants.
+
+The recorded quickstart returns `loss_increase`, not convergence. The example
+is useful for learning the interface; its successful execution does not validate
+the fit for inference. [Get started](vignettes/getting-started.Rmd) explains the
+status, scale conversion, downloadable scripts and full original demonstration.
 
 ```r
 source(system.file("examples", "quickstart.R", package = "drfarm"))
+help(package = "drfarm")
+?DrFARM.one
+citation("drfarm")
 ```
 
-Use `vignette("getting-started", package = "drfarm")` when vignettes were built.
-Function reference pages are available through `help(package = "drfarm")`.
+## Interpretation and limits
 
-## Opt-in update for unequal response variances
+Use matching preprocessing, coefficient scale and predictor precision when
+fitting or evaluating inference. The original p-value routines are retained;
+the historical predictor combination uses a **two-sided Cauchy tail**, and an
+optional-kinship model-selection basis mismatch has been demonstrated. The
+quickstart uses `K = NULL`. Lower objective values are not a global-optimum or
+inferential guarantee. Read [methods and limitations](vignettes/articles/methods-status.Rmd)
+before a scientific analysis.
 
-`remMap.weighted()` solves a separately specified weighted sparse-group
-coefficient objective. It uses the supplied working scale without automatic
-standardization or an intercept; `sigma` contains response **variances**.
-The installed analytic example has unequal variances and both penalties:
+## Cite and contribute
 
-```r
-source(system.file("examples", "weighted-update.R", package = "drfarm"))
-```
+Package authors: **Lap Sum Chan, Gen Li and Peter X.K. Song**.
+Use `citation("drfarm")` to cite the installed software and version. The
+[citation record](inst/CITATION), [GPL ≥ 3 license and third-party notices](LICENSE.md),
+[changelog](NEWS.md), and [contribution guide](CONTRIBUTING.md) are included.
+Maintainer contact details are preserved in `DESCRIPTION`.
 
-To use this coefficient update within the preceding DrFARM example:
+For the local documentation build and proposed Pages publication path, see
+[building the package website](docs/WEBSITE.md).
 
-```r
-fit.weighted <- DrFARM.one(
-  X, Y, initial$Theta0, precision, k = 2,
-  lambda1 = initial$lambda1.opt, lambda2 = initial$lambda2.opt,
-  coefficient.update = "weighted",
-  weighted.control = list(tol = 1e-8, max.sweeps = 1000L),
-  max.iter = 1000
-)
-fit.weighted$diagnostics
-```
-
-The default remains `coefficient.update = "historical"`. Weighted mode monitors
-the coefficient objective's full KKT residual; a failed inner solve stops its
-DrFARM caller. The outer loss, debiasing, factor updates, and inference are
-separate: a converged coefficient update does not validate the complete fit or
-its p-values. See [the objective and derivation](docs/WEIGHTED_UPDATE.md) for
-mask semantics, penalty normalization, stopping rules, and scope.
-
-## Separate Gaussian optimization baseline
-
-`gaussian.ecm.reference()` uses the weighted coefficient solver in a Gaussian
-ECM cycle. One coefficient tuple is used for both coefficient and covariance
-updates, and every accepted cycle is checked against a freshly evaluated
-observed Gaussian penalized likelihood. Supply `Theta0`, `B0` and positive
-`psi0` explicitly on your working scale; this API performs no automatic
-standardization and supports independent rows (`K = NULL`) only.
-
-```r
-source(system.file("examples", "gaussian-ecm-reference.R", package = "drfarm"))
-```
-
-This is a **different estimation procedure**: it omits DrFARM's inner debiasing.
-Both `DrFARM.one()` coefficient options retain their existing behavior. The
-reference supplies optimization diagnostics and no inference; it does not
-inherit DrFARM's validation claims or establish global optimality. See the
-[Gaussian ECM contract](docs/GAUSSIAN_ECM_REFERENCE.md) for the objective,
-variance bounds, stopping rules and comparison protocol, and the
-[outer reconciliation](docs/OUTER_GAUSSIAN.md) for the demonstrated differences.
-
-## Shapes, scale, and fitted components
-
-| Object | Shape | Meaning |
-|---|---|---|
-| `X` | n by p | Observed predictors |
-| `Y` | n by q | Continuous outcomes |
-| `Theta`, `Theta0` | q by p | Outcome rows, predictor columns |
-| `B` | q by k | Factor loadings |
-| `E.Z` | n by k | Estimated latent factor scores |
-| `precM(X)` | p by p | Predictor precision estimate |
-| `drfarm.dat$Theta.t` | p by q | Bundled generating coefficients, transposed relative to the fitted API |
-
-By default, DrFARM fitting and precision estimation use `scale()` to center each column
-and divide by its sample standard deviation. `Theta` therefore acts on
-standardized predictors and yields the standardized observed-predictor
-component. The package does not return an intercept or automatically transform
-coefficients back. Use the same preprocessing when fitting, scoring, and doing
-inference; `standardize = FALSE` requires the caller to supply the intended
-scale and compatible initial coefficients and precision matrix.
-
-For a default fit, recover raw-scale coefficients and their intercept as follows:
-
-```r
-sx <- apply(X, 2, sd)
-sy <- apply(Y, 2, sd)
-Theta.raw <- sweep(sweep(fit$Theta, 1, sy, "*"), 2, sx, "/")
-intercept <- colMeans(Y) - drop(Theta.raw %*% colMeans(X))
-Y.predictor <- sweep(X %*% t(Theta.raw), 2, intercept, "+")
-```
-
-This computes the observed-predictor component. For training participants with
-`K = NULL`, `E.Z %*% t(B)` is the additional fitted latent component on the
-standardized outcome scale. Those fitted scores use the observed outcomes;
-they are not automatically available for a new participant. There is no
-separate `predict()` method. Reject missing, nonfinite, or constant columns
-before standardizing. Retain row and column identities with your input data.
-
-The bundled example contains 500 participants, 10 predictors, and 5 outcomes.
-Its package documentation describes a rank-2 simulated factor model; that is why
-the example uses `k = 2`. The original simulation script and RNG seed are not
-bundled. The stored data reproduce this demonstration, not the entire original
-simulation experiment. Comparing `Theta` directly with `t(Theta.t)` also requires
-matching the coefficient scale.
-
-## Termination and inference
-
-`DrFARM.one()` and `DrFARM.whole()` retain the historical default
-`max.iter = Inf`; specify a finite budget in new workflows. Inspect diagnostics
-before interpreting a fit. With `coefficient.update = "historical"`,
-`converged = TRUE` requires the historical outer loss-change criterion and the
-inner coefficient-change criterion. With `"weighted"`, the inner criterion is
-the full coefficient-objective KKT residual. Neither mode certifies parameter
-stability or a global optimum of the full DrFARM procedure. Loss increases and exhausted iteration budgets are
-reported explicitly. The historical trial-return behavior on a loss increase is
-preserved. `remMap.one(..., diagnostics = TRUE)` exposes the native iteration
-report; its default return remains the coefficient matrix.
-
-`entry.pvalue()` retains the original outer-debiasing implementation. Its
-variance calculation requires positive residual variance, positive residual
-degrees of freedom, and a compatible precision estimate. A successful software
-check does not establish inferential calibration for a new dataset.
-`pleio.pvalue()` retains the historical two-sided Cauchy transform
-`2 * pcauchy(-abs(mean(1 / tan(pi * p))))` across each predictor's entry p-values.
-This is not the usual one-sided ACAT tail; its intended test and boundary
-behavior remain under review. It has not been silently replaced.
-
-The optional kinship matrix `K` rotates participants into an eigenbasis in some
-paths. A fixed-fit diagnostic reproduced a mismatch between the rotated evaluator
-and the historical whole-grid score; the quickstart uses `K = NULL`. See [NEWS.md](NEWS.md) for compatibility
-changes, [known issues](docs/KNOWN_ISSUES.md) for executed diagnostic scope,
-and [CONTRIBUTING.md](CONTRIBUTING.md) for reproducible checks.
-
-## Citation and authorship
-
-Use `citation("drfarm")` for the package citation and version. Original authors:
-Lap Sum Chan, Gen Li, and Peter X.K. Song. The historical README cites:
-
-> Chan, Lap Sum, et al. “DrFARM: Identification and inference for pleiotropic gene
-> in GWAS.” bioRxiv (2022).
-
-Publication metadata beyond that historical record has not been reconciled in
-this maintenance slice. DrFARM retains its GPL (>= 3) license and existing
-third-party notices.
+*Latent factors. Explicit assumptions.*

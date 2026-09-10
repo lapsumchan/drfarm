@@ -1,5 +1,12 @@
 # drfarm 0.1.0.9002
 
+* Add a pkgdown review site, native-math README, curated reference and explicit
+  method/status article. The getting-started vignette runs the original bundled
+  workflow and preserves stopping warnings. Numerical R/Rcpp source is unchanged.
+* Add pinned site-build dependencies, downloadable matching source/examples,
+  and a Pages workflow whose deployment requires manual dispatch on main.
+
+
 * Add the separately named `gaussian.ecm.reference()` optimization baseline for
   an explicit Gaussian observed-data likelihood with sparse-group penalties.
   It requires a supplied starting tuple and working scale, supports independent

@@ -12,3 +12,11 @@
 ^ci-logs$
 ^drfarm_.*\.tar\.gz$
 ^\.git$
+^_pkgdown\.yml$
+^pkgdown$
+^_site$
+^\.sites-runtime$
+^site-build$
+^node_modules$
+^package\.json$
+^package-lock\.json$

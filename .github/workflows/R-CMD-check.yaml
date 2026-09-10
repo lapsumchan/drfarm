@@ -43,6 +43,11 @@ jobs:
         run: |
           set -euo pipefail
           Rscript --vanilla inst/examples/quickstart.R 2>&1 | tee ci-logs/quickstart.log
+      - name: Run the original bundled-data workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          Rscript --vanilla tools/reproduce.R --mode full --output ci-logs/original-example --label ci-original-example 2>&1 | tee ci-logs/original-example-run.log
       - name: Reconcile fixed Gaussian outer fixtures
         shell: bash
         run: |
