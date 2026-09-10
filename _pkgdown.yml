@@ -1,0 +1,81 @@
+url: https://lapsumchan.github.io/drfarm/
+destination: _site
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#087e82"
+    bg: "#fcfcfa"
+    fg: "#24343a"
+    base_font: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    heading_font: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+    code_font: "ui-monospace, SFMono-Regular, Menlo, monospace"
+development:
+  mode: default
+home:
+  title: DrFARM · sparse associations across continuous outcomes
+  description: >
+    Debiased-regularized factor analysis regression in R. Model observed-predictor
+    associations and residual outcome dependence, with explicit method and inference scope.
+  sidebar:
+    structure: [candidate, links, license, citation, authors]
+    components:
+      candidate:
+        title: Development version
+        text: >
+          **0.1.0.9002** · R + Rcpp.
+          [Install and run](articles/getting-started.html).
+          Historical 0.1.0 remains separately archived.
+  links:
+    - text: Source repository
+      href: https://github.com/lapsumchan/drfarm
+    - text: Nature Communications paper
+      href: https://doi.org/10.1038/s41467-025-60439-4
+    - text: Archived code · 0.1.0
+      href: https://doi.org/10.5281/zenodo.15252156
+navbar:
+  structure:
+    left: [intro, reference, methods, citation, news]
+    right: [github]
+  components:
+    intro:
+      text: Get started
+      href: articles/getting-started.html
+    reference:
+      text: Function reference
+      href: reference/index.html
+    citation:
+      text: Cite DrFARM
+      href: authors.html#citation
+    methods:
+      text: Methods & status
+      href: articles/methods-status.html
+    github:
+      icon: fa-github
+      aria-label: GitHub source repository
+      href: https://github.com/lapsumchan/drfarm
+reference:
+  - title: Fit historical DrFARM
+    desc: Original procedure, with an explicit opt-in weighted coefficient update.
+    contents: [DrFARM.one, DrFARM.whole, DrFARM.grid, DrFARM.EBIC]
+  - title: Initialize sparse coefficients
+    contents: [remMap.one, remMap.whole, remMap.grid, remMap.EBIC]
+  - title: Estimate predictor precision
+    contents: [precM, precM.glasso, precM.QO, precM.NL.one, precM.NL.whole]
+  - title: Historical inference
+    desc: Requires matching assumptions and scale. Read the methods and status article before use.
+    contents: [entry.pvalue, pleio.pvalue]
+  - title: Separately named numerical references
+    desc: Defined optimization targets; no inherited DrFARM inference validation.
+    contents: [remMap.weighted, gaussian.ecm.reference]
+  - title: Example data
+    contents: [drfarm.dat]
+articles:
+  - title: Use and interpret
+    navbar: ~
+    contents: [getting-started, articles/methods-status]
+footer:
+  structure:
+    left: developed_by
+    right: [built_with, tagline]
+  components:
+    tagline: Latent factors. Explicit assumptions.

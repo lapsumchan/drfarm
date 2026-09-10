@@ -2,3 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+_site/
+.sites-runtime/
+pkgdown/assets/downloads/
+site-build/
+node_modules/

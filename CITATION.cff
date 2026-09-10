@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: >-
+  Cite the DrFARM method paper and the exact software version used.
+  This development candidate has no release DOI; record its full Git commit.
+  The referenced Zenodo DOI is only for historical version 0.1.0.
+type: software
+title: 'drfarm: Debiased-regularized factor analysis regression model'
+authors:
+  - family-names: Chan
+    given-names: Lap Sum
+  - family-names: Li
+    given-names: Gen
+  - family-names: Song
+    given-names: Peter X.K.
+version: 0.1.0.9002
+repository-code: https://github.com/lapsumchan/drfarm
+url: https://github.com/lapsumchan/drfarm
+license: GPL-3.0-or-later
+references:
+  - type: article
+    title: 'DrFARM: identification of pleiotropic genetic variants in genome-wide association studies'
+    authors:
+      - family-names: Chan
+        given-names: Lap Sum
+      - family-names: Li
+        given-names: Gen
+      - family-names: Fauman
+        given-names: Eric B.
+      - family-names: Yin
+        given-names: Xianyong
+      - family-names: Laakso
+        given-names: Markku
+      - family-names: Boehnke
+        given-names: Michael
+      - family-names: Song
+        given-names: Peter X. K.
+    journal: Nature Communications
+    volume: '16'
+    start: '5789'
+    year: 2025
+    doi: 10.1038/s41467-025-60439-4
+  - type: software
+    title: 'lapsumchan/drfarm: 0.1.0'
+    authors:
+      - name: lapsumchan
+    version: 0.1.0
+    date-released: '2025-04-20'
+    doi: 10.5281/zenodo.15252156
+    url: https://zenodo.org/records/15252156

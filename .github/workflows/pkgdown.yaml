@@ -1,0 +1,83 @@
+name: Package documentation
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the reviewed main branch to GitHub Pages'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      OMP_NUM_THREADS: 1
+      OPENBLAS_NUM_THREADS: 1
+      MKL_NUM_THREADS: 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3.3'
+      - uses: r-lib/actions/setup-pandoc@v2
+        with:
+          pandoc-version: '3.1.3'
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran libcurl4-openssl-dev libssl-dev libxml2-dev libfontconfig1-dev libfreetype6-dev libharfbuzz-dev libfribidi-dev libpng-dev libtiff-dev libjpeg-dev
+      - name: Install pinned R dependencies and build
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p site-build
+          Rscript --vanilla tools/install-site-dependencies.R 2>&1 | tee site-build/dependencies.log
+          Rscript --vanilla tools/build-site.R 2>&1 | tee site-build/site.log
+          python3 tools/check-site.py _site | tee site-build/links.log
+          Rscript --vanilla tools/reproduce.R --mode full --output site-build/original-example --label ci-documentation --library site-build/library 2>&1 | tee site-build/original-example.log
+      - name: Retain review site and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drfarm-documentation-review
+          path: |
+            _site/
+            site-build/*.log
+            site-build/sessionInfo.txt
+            site-build/installed-exports.txt
+            site-build/original-example/
+          retention-days: 14
+      - name: Prepare approved Pages artifact
+        if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy reviewed documentation
+        id: deployment
+        uses: actions/deploy-pages@v4

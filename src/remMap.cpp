@@ -318,7 +318,7 @@ List MultiRegGroupLasso_sigma_unified(
   double eps    = 1e-3;
   double flag   = 100.0;
   int n_iter    = 0;
-  int max_iter  = 1000000000;  // i.e. 1e+10
+  int max_iter  = 1000000000;  // historical coordinate-update budget
 
   while ((flag > eps) && (n_iter < max_iter)) {
     // Recompute rowwise norm Bnorm from current phi
@@ -412,7 +412,12 @@ List MultiRegGroupLasso_sigma_unified(
     _["Phi_output"] = phi,
     _["N_iter"]     = n_iter,
     _["RSS"]        = rss,
-    _["E_debug"]    = E
+    _["E_debug"]    = E,
+    _["final_delta"] = flag,
+    _["threshold"] = eps,
+    _["update_budget"] = max_iter,
+    _["converged"] = std::isfinite(flag) && flag <= eps,
+    _["termination"] = (std::isfinite(flag) && flag <= eps) ? "coefficient_change" : "update_budget"
   );
 }
 

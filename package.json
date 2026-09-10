@@ -1,0 +1,7 @@
+{
+  "name": "drfarm-documentation-preview",
+  "private": true,
+  "description": "Development preview for the pkgdown-generated static site only",
+  "scripts": {"dev": "vite --config tools/vite.preview.mjs"},
+  "devDependencies": {"vite": "7.1.5"}
+}

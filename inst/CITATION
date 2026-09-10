@@ -1,0 +1,44 @@
+citHeader(paste(
+  "Cite the method paper and the exact software version used.",
+  "For a development checkout, also record its full Git commit.",
+  "The separate historical archive entry below applies only to version 0.1.0."
+))
+
+bibentry(
+  bibtype = "Article",
+  title = "{DrFARM}: identification of pleiotropic genetic variants in genome-wide association studies",
+  author = c(
+    person("Lap Sum", "Chan"), person("Gen", "Li"),
+    person("Eric B.", "Fauman"), person("Xianyong", "Yin"),
+    person("Markku", "Laakso"), person("Michael", "Boehnke"),
+    person("Peter X. K.", "Song")
+  ),
+  journal = "Nature Communications",
+  year = "2025",
+  volume = "16",
+  pages = "5789",
+  doi = "10.1038/s41467-025-60439-4"
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "{drfarm}: Debiased-Regularized Factor Analysis Regression",
+  author = c(
+    person("Lap Sum", "Chan"),
+    person("Gen", "Li"),
+    person("Peter X.K.", "Song")
+  ),
+  year = sub("-.*", "", meta$Date),
+  note = paste("R package version", meta$Version),
+  url = "https://github.com/lapsumchan/drfarm"
+)
+
+bibentry(
+  bibtype = "Manual",
+  title = "{lapsumchan/drfarm}: 0.1.0",
+  author = person("lapsumchan"),
+  year = "2025",
+  note = "Historical software archive, version 0.1.0; not the development candidate",
+  doi = "10.5281/zenodo.15252156",
+  url = "https://zenodo.org/records/15252156"
+)

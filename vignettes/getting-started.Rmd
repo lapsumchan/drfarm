@@ -1,0 +1,220 @@
+---
+title: "Get started: installation to interpretation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Get started: installation to interpretation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(drfarm)
+site_link <- function(label, path) {
+  if (identical(Sys.getenv("IN_PKGDOWN"), "true")) {
+    paste0("[", label, "](", path, ")")
+  } else paste0(label, " (on the documentation site)")
+}
+```
+
+## Install the matching source
+
+These pages describe the **0.1.0.9002 development version**. Install the matching
+source before using its new
+diagnostics, weighted coefficient option or Gaussian ECM reference.
+
+The checked development source is available from GitHub:
+
+```{r github-installation, eval=FALSE}
+install.packages("remotes")
+remotes::install_github(
+  "lapsumchan/drfarm@3ccf15176783ba7d0128c15403a2191e5491fd39",
+  upgrade = "never"
+)
+```
+
+The commit fixes the source version. To also match the recorded dependency
+versions, use a full source checkout:
+
+```sh
+git clone https://github.com/lapsumchan/drfarm.git
+cd drfarm
+git checkout 3ccf15176783ba7d0128c15403a2191e5491fd39
+Rscript --vanilla tools/install-dependencies.R
+R CMD INSTALL .
+```
+
+If using the optional documentation-site preview, download the
+`r site_link("candidate source archive", "../downloads/drfarm_0.1.0.9002.tar.gz")`.
+From the directory containing that file, run in R:
+
+```{r installation, eval=FALSE}
+install.packages(c("glasso", "glmnet", "psych", "Rcpp"))
+install.packages("drfarm_0.1.0.9002.tar.gz", repos = NULL, type = "source")
+library(drfarm)
+packageVersion("drfarm")
+```
+
+R ≥ 4.3.0 and a C++ compilation toolchain are required. The current local checks
+use **R 4.3.3 on Ubuntu 24.04**. Windows and macOS are not locally checked in
+this sprint. On Windows, use the Rtools matching your R installation; on macOS,
+install the Xcode command-line tools. If compilation fails, retain its complete
+log and `sessionInfo()`; check that Rcpp, glasso, glmnet and psych load first.
+
+To reproduce the historical source specifically, use the pinned GitHub commit:
+
+```{r historical-install, eval=FALSE}
+install.packages("remotes")
+remotes::install_github(
+  "lapsumchan/drfarm@be6d52ee796161e732f398da5eadfc3d40812f34"
+)
+```
+
+That source has the original methods, but lacks the candidate's finite-budget
+diagnostics, weighted solver and ECM reference. It is not a CRAN release.
+
+## Start with the original bundled data
+
+The original demonstration contains 500 participants, 10 predictors and 5
+continuous outcomes. Its documented latent rank is two; we use `k = 2` here.
+The original simulation generator and seed are not bundled, so this reproduces
+the software example rather than the entire original simulation study.
+
+```{r data}
+data("drfarm.dat", package = "drfarm")
+X <- drfarm.dat$X
+Y <- drfarm.dat$Y
+rbind(X = dim(X), Y = dim(Y), generating_Theta = dim(drfarm.dat$Theta.t))
+```
+
+The generating `Theta.t` is p × q. The fitted `Theta` is q × p: outcome rows,
+predictor columns. Orientation and scale must both match before a comparison.
+
+## Reproduce the original fitting workflow
+
+The original main example uses the default 100-cell remMap grid to initialize
+coefficients, estimates predictor precision, and fits the default 25-cell DrFARM
+grid. The calls below retain that procedure and its selection rule.
+
+```{r fit}
+set.seed(20260909)
+initial <- remMap.whole(X, Y)
+precision <- precM(X)
+fit.warnings <- character()
+fit <- withCallingHandlers(
+  DrFARM.whole(
+    X, Y, initial$Theta0, precision, k = 2,
+    lambda1.opt = initial$lambda1.opt,
+    lambda2.opt = initial$lambda2.opt
+  ),
+  warning = function(w) {
+    fit.warnings <<- c(fit.warnings, conditionMessage(w))
+    invokeRestart("muffleWarning")
+  }
+)
+table(fit.warnings)
+```
+
+Repeated warnings are counted above because they are part of the result.
+The handler only collects messages; it does not change the fit. For new workflows,
+choose a finite `max.iter`; this original-workflow reproduction keeps the defaults.
+Inspect the returned status before interpreting the coefficients:
+
+```{r status}
+fit$diagnostics[c("converged", "termination", "iterations", "inner.converged")]
+rbind(Theta = dim(fit$Theta), B = dim(fit$B), E.Z = dim(fit$E.Z))
+round(fit$Theta[, c(3, 8, 10), drop = FALSE], 3)
+```
+
+The retained example completes but reports `loss_increase`; all 25 candidate
+fits in the earlier checked run had that status. The historical procedure
+retains the increasing trial and can select it. **Successful execution is not
+optimizer convergence.** The output above is evaluated again when this article
+is built; no stopping rule is changed to make the example look successful.
+
+## Reproduce the historical inference outputs
+
+These are the original example's entrywise and predictor-level outputs. We
+retain them as a compatibility demonstration, with the fit's warning still
+visible. They are not evidence of inferential calibration or recommendations
+to interpret p-values from an unconverged analysis.
+
+```{r historical-inference}
+pval.entry <- entry.pvalue(X, Y, fit$Theta, fit$B, fit$E.Z, precision)
+pval.predictor <- pleio.pvalue(X, Y, fit$Theta, fit$B, fit$E.Z, precision)
+dim(pval.entry)        # one value for each outcome–predictor pair
+length(pval.predictor) # one combined value for each predictor
+signif(pval.predictor, 3)
+```
+
+The predictor combination retains its historical **two-sided Cauchy tail**.
+Use the `r site_link("methods and status article", "methods-status.html")` for its limitations
+and the optional-K issue. All introductory examples use `K = NULL`.
+
+## Read a coefficient on the right scale
+
+Default fitting centers X and Y and divides each column by its sample standard
+deviation. Thus `Theta[r, j]` is the fitted outcome-r change in standard-deviation
+units per one-standard-deviation change in predictor j, holding the other
+observed predictors fixed on the model scale. This is an association, not an
+automatic causal effect or an unbiased estimate.
+
+$$
+\Theta_{\rm raw}=\operatorname{diag}(s_Y)\,\Theta\,
+\operatorname{diag}(s_X)^{-1},\qquad
+\alpha=\bar Y-\Theta_{\rm raw}\bar X.
+$$
+
+Multiply each outcome row by its original standard deviation, then divide each
+predictor column by its original standard deviation:
+
+```{r raw-scale}
+sx <- apply(X, 2, sd)
+sy <- apply(Y, 2, sd)
+Theta.raw <- sweep(sweep(fit$Theta, 1, sy, "*"), 2, sx, "/")
+intercept <- colMeans(Y) - drop(Theta.raw %*% colMeans(X))
+Y.predictor <- sweep(X %*% t(Theta.raw), 2, intercept, "+")
+round(head(Y.predictor, 3), 2)
+```
+
+This is the **observed-predictor component**, not the full training fit. The
+latent training contribution is `fit$E.Z %*% t(fit$B)` on the standardized
+outcome scale. Its scores use observed outcomes and cannot simply be carried
+over to new participants. There is no general `predict()` method. Retain training
+centers/scales and the predictor order; remove missing or nonfinite values and
+handle constant columns before standardizing.
+
+## Scripts, help and a separate baseline
+
+The shorter `r site_link("quickstart script", "../downloads/quickstart.R")` uses a four-cell
+remMap grid and one finite-budget fit, then checks shapes and scale conversion:
+
+```{r installed-example, eval=FALSE}
+source(system.file("examples", "quickstart.R", package = "drfarm"))
+```
+
+The `r site_link("original reproduction runner", "../downloads/reproduce.R")` records the full
+example's data, fitted objects, warnings, timings and environment. From a source
+checkout, using a new output directory:
+
+```sh
+Rscript --vanilla tools/reproduce.R --mode full --output original-demo \
+  --label original-bundled-example
+```
+
+The `r site_link("Gaussian ECM example", "../downloads/gaussian-ecm-reference.R")` is a separate
+deterministic optimization fixture with explicit starts and no automatic
+standardization. Its recorded small fit converged after 65 cycles. It removes
+inner debiasing and supplies no inference; it does not replace the example above.
+
+```{r help, eval=FALSE}
+source(system.file("examples", "gaussian-ecm-reference.R", package = "drfarm"))
+help(package = "drfarm")
+?DrFARM.whole
+citation("drfarm")
+```
+
+Package authors are Lap Sum Chan, Gen Li and Peter X.K. Song. The installed
+software citation records the version; GPL ≥ 3 and third-party notices are
+preserved. The `r site_link("function reference", "../reference/index.html")` and
+`r site_link("citation page", "../authors.html#citation")` provide the full details.

@@ -1,0 +1,149 @@
+---
+title: "Methods, assumptions, and status"
+---
+
+## The scientific question
+
+Which observed predictors are associated with several continuous outcomes, after
+accounting for dependence left in the responses? DrFARM was developed for
+pleiotropic-variant analysis in multi-trait GWAS. Its design matrix can also hold
+non-genetic predictors; this does not change the supported continuous-response
+model into a generalized-response model.
+
+The working representation is
+
+$$Y=X\Theta^T+ZB^T+E.$$
+
+Each row is one participant. `X` is n by p and `Y` is n by q. The fitted
+coefficient matrix `Theta` is **q by p**: outcome rows, predictor columns.
+`B` is q by k. Sparse-group penalties act on entries and predictor columns of
+`Theta`; the factors represent the latent response component. They do not impose
+a low-rank factorization of `Theta`. Association alone is not a causal effect.
+
+## Choose the appropriate path
+
+| Path | API | What its diagnostics establish | Inference status |
+|---|---|---|---|
+| Historical DrFARM | `DrFARM.one()` or `DrFARM.whole()`, default `coefficient.update = "historical"` | Historical loss-change rule plus the native inner coefficient-change rule | Original formulas remain available; maintenance tests do not establish new calibration claims |
+| Weighted coefficient option | Same DrFARM calls with `coefficient.update = "weighted"`; standalone `remMap.weighted()` | The inner solver checks its weighted sparse-group objective's KKT residual; the outer procedure remains the preserved DrFARM composition | Explicitly `unvalidated_for_weighted_update` |
+| Gaussian ECM reference | `gaussian.ecm.reference()` | Fresh observed Gaussian objective and stationarity diagnostics at the returned tuple | `not_provided`; no debiased estimate, standard error, or p-value |
+
+The weighted option and ECM reference are development features introduced after
+the public 0.1.0 source. Install the documentation's matching candidate before
+using them. The function reference gives each argument and return value.
+
+## Scale and output interpretation
+
+By default, DrFARM fitting and precision estimation center every column and
+divide by its sample standard deviation. `Theta` then maps standardized
+predictors to standardized outcomes. The package returns no intercept or
+automatic back-transformation. Use consistent preprocessing for initialization,
+precision, fitting, and inference; `standardize = FALSE` means the caller owns
+the working scale. Constant columns cannot be standardized.
+
+The standalone weighted solver and Gaussian ECM reference use the supplied scale
+with no automatic standardization or intercept. Their losses are summed, not
+divided by n. Their C mask fixes C=0 entries to zero, penalizes C=1 entries with
+both penalties, and leaves C=2 entries outside both penalties and the group norm.
+
+For `K = NULL`, `X %*% t(Theta)` is the observed-predictor component on the working
+scale. `E.Z %*% t(B)` describes the training latent component. Factor scores use
+the observed outcomes and are not automatically known for a new participant.
+There is currently no general `predict()` method. Factor coordinates can rotate;
+compare their fitted products and implied covariance rather than arbitrary signs.
+
+## What the penalty selects
+
+For the default all-penalized coefficient matrix,
+
+$$\mathcal P(\Theta)=\underbrace{\lambda_1\sum_{r,j}|\Theta_{rj}|}_{\text{individual associations}}+\underbrace{\lambda_2\sum_j\|\Theta_{\cdot j}\|_2}_{\text{whole predictors}}.$$
+
+The entry penalty can remove individual predictor–outcome associations; the group
+penalty can remove an entire predictor column. This describes a penalty, not an
+inference test. The weighted solver reference documents the C mask and the summed
+loss normalization.
+
+## Why the Gaussian reference is separate
+
+The reference assumes independent rows,
+$z_i\sim N_k(0,I_k)$, diagonal positive residual covariance
+$\Psi=\operatorname{diag}(\psi)$, and independence of factors, errors and observed
+predictors. Under this explicit Gaussian model, the factor-conditional and
+integrated observed-predictor mean coefficient is the same `Theta`.
+
+With $R=Y-X\Theta^T$ and $\Sigma=BB^T+\Psi$, its target is
+
+$$L=\frac n2\log|\Sigma|+
+\frac12\operatorname{tr}(R\Sigma^{-1}R^T)+\mathcal P_C(\Theta),$$
+
+omitting the constant $nq\log(2\pi)/2$. Each cycle freezes one posterior of the
+factors, updates the sparse coefficients, and uses that same coefficient matrix
+in the loading and full expected-residual-variance updates. It then recomputes
+the observed objective and gradients. An unsuccessful trial returns the last
+accepted tuple. A positive `psi.min` is an explicit variance constraint; zero
+does not enable an automatic floor.
+
+This procedure omits DrFARM's inner debiasing and **changes the estimator**.
+The original outer monitor, inner debiasing, and covariance updates are retained
+in both DrFARM paths. Their full composition is not certified as an optimizer of
+this Gaussian objective. A successful weighted coefficient solve alone does not
+establish that certification.
+
+Successful reference stopping requires the configured first-order stationarity tolerance and a small
+relative observed-objective change, or a starting tuple already within that stationarity tolerance.
+These checks establish neither global optimality nor inferential validity. A
+zero-loading start can be a stationary saddle.
+
+## Recorded examples and limits
+
+The retained 0.1.0.9002 execution on R 4.3.3 / Ubuntu 24.04 used fixed small
+fixtures, then one common-start bundled-data comparison. These are optimization
+diagnostics, not a simulation study of estimation accuracy or inference.
+
+| Recorded reference case | Result |
+|---|---|
+| Two analytically stationary small starts | Returned unchanged, `initial_stationary`, zero cycles |
+| Asymmetric n=4, p=1, q=2, k=1 fixture | `stationarity_and_objective` after 65 cycles; objective 6.4081872518; maximum score/n 9.53725e-7 |
+| Four n=500, p=10, q=5, k=2 bundled-data grid cells | All reached `max_iter = 500`; all remained above the 1e-6 score tolerance |
+
+The four reference grid objectives were lower than the corresponding preserved
+fits, but none of those four cells converged. They are not rerun to render this
+site. The small asymmetric example is distributed as
+`inst/examples/gaussian-ecm-reference.R`. Recreate and compare the small fixtures
+from a source checkout using new output directories:
+
+```sh
+Rscript --vanilla tools/reconcile-outer.R --output outer-small
+Rscript --vanilla tools/compare-gaussian-ecm.R \
+  --fixtures outer-small/fixtures.rds --output ecm-small
+```
+
+The bundled 500-cycle results above are retained evidence rather than a site
+build dependency. Retain each reproduction's source, input, environment and
+stopping records.
+
+## Inference and unresolved behavior
+
+`entry.pvalue()` retains historical outer-debiasing inference. It requires a
+compatible predictor precision estimate, positive residual variance and positive
+residual degrees of freedom. Neither the weighted update nor the ECM reference
+adds inferential validation.
+
+`pleio.pvalue()` preserves the two-sided Cauchy-tail formula
+`2 * pcauchy(-abs(mean(1 / tan(pi * p))))` for each predictor. It differs from the
+usual one-sided Cauchy combination; its intended test and boundary behavior
+remain unresolved. Do not substitute a new tail silently.
+
+The optional-K paths have a demonstrated whole-grid scoring basis mismatch;
+the introductory examples use `K = NULL`. The reference itself supports only
+independent rows. Generalized-response DrFARM, new response families, and Python
+support are not established by this work.
+
+The package is implemented in R with an existing Rcpp kernel. Read the
+[Gaussian ECM derivation](../../docs/GAUSSIAN_ECM_REFERENCE.md),
+[weighted objective](../../docs/WEIGHTED_UPDATE.md), and
+[known issues](../../docs/KNOWN_ISSUES.md) for details. The
+[recorded ECM summary](../../pkgdown/assets/evidence/gaussian-ecm-summary.json) binds these numbers
+to the previous source and execution; the site build does not rerun that grid.
+
+*Latent factors. Explicit assumptions.*

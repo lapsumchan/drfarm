@@ -1,0 +1,27 @@
+:root { --forge-teal: #087e82; --forge-ink: #24343a; --forge-line: #dfe8e7; }
+body { font-size: 1.04rem; line-height: 1.7; background: #fcfcfa; color: var(--forge-ink); }
+.navbar { background: #fff !important; border-bottom: 1px solid var(--forge-line); box-shadow: none; }
+.navbar-brand { font-weight: 750; letter-spacing: -.035em; color: var(--forge-teal) !important; }
+.navbar-nav .nav-link { font-weight: 550; }
+.page-header { border-bottom: none; margin-bottom: 1.35rem; }
+.page-header h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 750; letter-spacing: -.045em; line-height: 1.15; }
+h2 { font-size: 1.65rem; font-weight: 680; letter-spacing: -.02em; margin-top: 2.7rem; padding-top: .45rem; }
+h3 { font-size: 1.22rem; font-weight: 650; margin-top: 1.8rem; }
+a { color: var(--forge-teal); text-underline-offset: .18em; }
+a:hover { color: #075d60; }
+a:focus-visible, button:focus-visible { outline: 3px solid #d27c23; outline-offset: 3px; }
+main .section:first-of-type > p:first-of-type { font-size: 1.16rem; }
+main .math.display { display: block; overflow-x: auto; padding: 1.8rem .9rem; margin: 1.5rem 0; background: #edf5f4; border-left: 3px solid var(--forge-teal); border-radius: .2rem; }
+pre { background: #f0f4f4; border: 1px solid var(--forge-line); border-radius: .4rem; padding: 1.1rem; font-size: .88rem; line-height: 1.6; }
+code { color: #185961; overflow-wrap: anywhere; }
+pre code { overflow-wrap: normal; }
+table { display: block; width: 100%; overflow-x: auto; font-size: .95rem; margin: 1.3rem 0; }
+th { color: #375055; font-weight: 650; background: #edf3f2; }
+td, th { padding: .85rem !important; vertical-align: top; border-bottom: 1px solid var(--forge-line) !important; }
+.table tbody tr:nth-child(odd) { background: transparent; }
+aside { font-size: .9rem; padding-top: .4rem; }
+aside h2 { font-size: 1rem; color: #456164; margin-top: 1.8rem; }
+footer { border-top: 1px solid var(--forge-line); color: #586c70; font-size: .85rem; margin-top: 4rem; padding-top: 1.5rem; }
+.callout { background: #edf5f4; border-left: 3px solid var(--forge-teal); padding: 1rem 1.2rem; margin: 1.5rem 0; }
+@media (min-width: 1200px) { .container { max-width: 1180px; } main { padding-right: 2rem; } }
+@media (max-width: 767px) { body { font-size: 1rem; } .page-header h1 { margin-top: 1rem; } h2 { margin-top: 2rem; } main .math.display { padding: 1.25rem .4rem; font-size: .84rem; } td, th { min-width: 7rem; padding: .65rem !important; } pre { font-size: .8rem; } }

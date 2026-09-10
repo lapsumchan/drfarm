@@ -33,5 +33,5 @@ A list with the following elements:
 }
 \description{
 Estimates one row of the precision matrix via Nodewise Lasso, serving as a helper function
-for \code{precM.NL.all} to facilitate parallelization.
+for \code{precM.NL.whole} to facilitate parallelization.
 }
