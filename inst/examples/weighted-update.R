@@ -3,13 +3,13 @@
 # Rscript --vanilla inst/examples/weighted-update.R
 local({
   library(drfarm)
-  
+
   X <- matrix(c(1, -1) / sqrt(2), ncol = 1)
   Y <- X %*% matrix(c(8, 5.5), nrow = 1)
   sigma <- c(1, 0.25)  # Response variances, not standard deviations.
   lambda1 <- 2
   lambda2 <- 5
-  
+
   weighted <- remMap.weighted(
     X, Y, lambda1 = lambda1, lambda2 = lambda2, sigma = sigma,
     control = list(tol = 1e-8, max.sweeps = 1000L,
@@ -17,7 +17,7 @@ local({
   )
   print(weighted$Theta0)
   print(weighted$diagnostics)
-  
+
   # Independent reference: h=(1,4), soft(s,2)=(6,20), t=1 gives b=(3,4).
   b <- drop(weighted$Theta0)
   coefficient.error <- max(abs(b - c(3, 4)))
@@ -35,7 +35,7 @@ local({
     abs(objective - 56) < 1e-7,
     max(abs(gradient)) < 1e-7
   )
-  
+
   # This is a coefficient-subproblem check. It does not certify the outer
   # DrFARM factor/debiasing iteration or its inference procedures.
 })
