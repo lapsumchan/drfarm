@@ -31,7 +31,7 @@ The historical `0.1.0` source is pinned at commit
 remotes::install_github("lapsumchan/drfarm@be6d52ee796161e732f398da5eadfc3d40812f34")
 ```
 
-This checkout is the `0.1.0.9001` development candidate. To install it locally,
+This checkout is the `0.1.0.9002` development candidate. To install it locally,
 run `Rscript --vanilla tools/install-dependencies.R` for the recorded dependency
 versions, then `R CMD INSTALL .` from the checkout. The dependency installer
 includes the vignette tools. A development version
@@ -107,6 +107,27 @@ separate: a converged coefficient update does not validate the complete fit or
 its p-values. See [the objective and derivation](docs/WEIGHTED_UPDATE.md) for
 mask semantics, penalty normalization, stopping rules, and scope.
 
+## Separate Gaussian optimization baseline
+
+`gaussian.ecm.reference()` uses the weighted coefficient solver in a Gaussian
+ECM cycle. One coefficient tuple is used for both coefficient and covariance
+updates, and every accepted cycle is checked against a freshly evaluated
+observed Gaussian penalized likelihood. Supply `Theta0`, `B0` and positive
+`psi0` explicitly on your working scale; this API performs no automatic
+standardization and supports independent rows (`K = NULL`) only.
+
+```r
+source(system.file("examples", "gaussian-ecm-reference.R", package = "drfarm"))
+```
+
+This is a **different estimation procedure**: it omits DrFARM's inner debiasing.
+Both `DrFARM.one()` coefficient options retain their existing behavior. The
+reference supplies optimization diagnostics and no inference; it does not
+inherit DrFARM's validation claims or establish global optimality. See the
+[Gaussian ECM contract](docs/GAUSSIAN_ECM_REFERENCE.md) for the objective,
+variance bounds, stopping rules and comparison protocol, and the
+[outer reconciliation](docs/OUTER_GAUSSIAN.md) for the demonstrated differences.
+
 ## Shapes, scale, and fitted components
 
 | Object | Shape | Meaning |
@@ -119,7 +140,7 @@ mask semantics, penalty normalization, stopping rules, and scope.
 | `precM(X)` | p by p | Predictor precision estimate |
 | `drfarm.dat$Theta.t` | p by q | Bundled generating coefficients, transposed relative to the fitted API |
 
-By default, fitting and precision estimation use `scale()` to center each column
+By default, DrFARM fitting and precision estimation use `scale()` to center each column
 and divide by its sample standard deviation. `Theta` therefore acts on
 standardized predictors and yields the standardized observed-predictor
 component. The package does not return an intercept or automatically transform

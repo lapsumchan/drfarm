@@ -1,7 +1,7 @@
 # Known numerical issues and compatibility scope
 
 Reference source: `be6d52ee796161e732f398da5eadfc3d40812f34` (0.1.0).
-Development candidate: 0.1.0.9001. Local diagnostic environment: R 4.3.3,
+Development candidate: 0.1.0.9002. Local diagnostic environment: R 4.3.3,
 glasso 1.11, glmnet 4.1-8, psych 2.4.1 and Rcpp 1.0.12. These are finite
 software/algorithm checks, not a new assessment of published inferential theory.
 
@@ -44,6 +44,28 @@ alternative objective or refute the original inferential theory.
 See [OUTER_GAUSSIAN.md](OUTER_GAUSSIAN.md) for equations, exact fixtures,
 interpretation and the runnable `tools/reconcile-outer.R` diagnostic. Both fitting
 paths and their stopping/return behavior remain unchanged.
+
+## Separate Gaussian ECM: coherent target, finite convergence limits
+
+The separately named `gaussian.ecm.reference()` now uses one updated coefficient
+matrix in the loading and full posterior variance steps, with fresh observed
+likelihood and stationarity monitoring. It omits inner debiasing, changes the
+estimation procedure, supports independent rows only, and supplies no inference.
+It does not repair or replace either preserved DrFARM fitting path.
+
+On the three fixed Gaussian starts, the reference retains both analytically
+stationary tuples and meets its objective/score stopping criteria after 65
+cycles on the asymmetric fixture. In the matched four-cell bundled-data grid,
+all four reference fits lower the specified Gaussian objective but reach the
+500-cycle budget with maximum per-observation scores between 4.97e-6 and
+2.82e-5, above the requested 1e-6. The variance gradient is the largest residual
+in each cell. These remain explicit `max_iter` results; no inference, global
+optimum, usual convergence rate or speed improvement is established.
+
+See [GAUSSIAN_ECM_REFERENCE.md](GAUSSIAN_ECM_REFERENCE.md) for the mathematical
+target, deterministic example and comparison. A zero factor start can be an
+absorbing stationary saddle. Positive variance bounds are explicit changes to
+the optimization domain, not an automatic cure for slow convergence.
 
 ## Optional K: the score must use the same participant basis
 

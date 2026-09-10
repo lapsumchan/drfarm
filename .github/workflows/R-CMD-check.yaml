@@ -48,6 +48,12 @@ jobs:
         run: |
           set -euo pipefail
           Rscript --vanilla tools/reconcile-outer.R --output ci-logs/outer-objective 2>&1 | tee ci-logs/outer-objective-run.log
+      - name: Compare the separate Gaussian ECM reference
+        shell: bash
+        run: |
+          set -euo pipefail
+          Rscript --vanilla inst/examples/gaussian-ecm-reference.R 2>&1 | tee ci-logs/gaussian-ecm-example.log
+          Rscript --vanilla tools/compare-gaussian-ecm.R --fixtures ci-logs/outer-objective/fixtures.rds --output ci-logs/gaussian-ecm 2>&1 | tee ci-logs/gaussian-ecm-run.log
       - name: Build source package and vignette
         shell: bash
         run: |

@@ -1,3 +1,26 @@
+# drfarm 0.1.0.9002
+
+* Add the separately named `gaussian.ecm.reference()` optimization baseline for
+  an explicit Gaussian observed-data likelihood with sparse-group penalties.
+  It requires a supplied starting tuple and working scale, supports independent
+  rows only, and uses the existing weighted coefficient solver.
+* Use one coefficient tuple throughout each frozen-posterior coefficient,
+  loading and variance cycle. Retain the full posterior residual-variance
+  contribution and recompute the observed objective and stationarity at the
+  complete candidate tuple.
+* Check all three conditional-objective changes and the fresh observed
+  objective. Reject failed complete trials, retain the last accepted tuple and
+  report finite budgets, boundary failures and observed stationarity. An
+  optional positive variance lower bound defines an explicit constrained target.
+* Add an installed small example and `docs/GAUSSIAN_ECM_REFERENCE.md` with the
+  mathematical target, controls, output meaning and comparison protocol.
+
+Migration: this reference omits DrFARM's inner debiasing and therefore changes
+the estimation procedure. It supplies no inference and inherits no DrFARM
+inferential validation. The historical and weighted DrFARM paths, their default
+behavior and their existing p-value functions remain unchanged. Gaussian ECM
+stationarity is not a global-optimum guarantee or a generalized DrFARM extension.
+
 # drfarm 0.1.0.9001
 
 * Add `remMap.weighted()` for an explicitly specified, fixed-variance weighted
