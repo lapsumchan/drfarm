@@ -1,227 +1,156 @@
-# Debiased-regularized factor analysis regression model (DrFARM)
+# DrFARM
 
-### Overview
-This repository provides a demonstration on how to use the `R` package `drfarm`
+**Debiased-regularized factor analysis regression model**
 
-# System Requirements
+Which predictors are associated with several continuous outcomes—and which
+associations remain after accounting for shared residual variation?
 
-## Software Requirements
+DrFARM combines sparse multivariate regression with latent response factors.
+It was developed for pleiotropy in multi-trait GWAS; observed predictors can
+also be non-genetic. The implementation is **R with Rcpp**.
 
-### OS Requirements
+**Source versions:** `main` preserves the historical **0.1.0** package. The
+quickstart below installs the checked **0.1.0.9002 development version** from a
+pinned GitHub commit, including its explicitly labelled method options.
 
-The source code has been tested on Microsoft's Windows 10 operating system and Linux (Ubuntu 18.04). The source code should be compatible with Windows, Mac, and Linux operating systems.
+Start with this README, then use the development
+[installation example](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd) and
+[methods and status](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/articles/methods-status.Rmd). Those same development
+docs and R help generate the optional package website.
 
-Before using `drfarm` package, users should have `R` version 4.3.0 or higher.
+$$
+\underbrace{Y}_{\text{outcomes}} =
+\underbrace{X\Theta^\top}_{\text{observed predictors}} +
+\underbrace{ZB^\top}_{\text{latent factors}} +
+\underbrace{E}_{\text{noise}}.
+$$
 
-### Installation  
+**Read it left to right:** observed predictors explain the mean; latent factors
+explain residual dependence between outcomes. The coefficient matrix
+$\Theta$ belongs to the observed predictors. It is **not** constrained to be
+low rank.
 
-First, install `drfarm` from GitHub using `devtools`:  
+| Data or parameter | Shape | One row represents |
+|---|---|---|
+| `X` / `Y` | n × p / n × q | A participant |
+| `Theta` | q × p | An outcome; columns are predictors |
+| `B` / `E.Z` | q × k / n × k | An outcome / a participant |
 
-    # Install devtools if not already installed
-    # install.packages("devtools") 
-    devtools::install_github("lapsumchan/drfarm")
-    
-Installation should complete within a couple of minutes on a standard machine.
+## Choose a method
 
-# Demo
+| Path | Use it for | Status and interpretation |
+|---|---|---|
+| **Historical DrFARM** · `DrFARM.one()` / `DrFARM.whole()` | The original fitting and debiasing procedure | Default path; inspect outer and inner stopping diagnostics before inference |
+| **Weighted coefficient option** · `coefficient.update = "weighted"` | A specified unequal-variance coefficient subproblem within DrFARM | Opt-in; inner debiasing remains; weighted inference is unvalidated |
+| **Gaussian ECM reference** · `gaussian.ecm.reference()` | Optimization of an explicit Gaussian penalized likelihood, with independent rows | Different estimator; no inner debiasing and no inference supplied |
 
-Below is a toy example demonstrating the end-to-end workflow of DrFARM. For reproducibility, we use a small simulated dataset (`drfarm.dat`) included in the package.
+All three paths use continuous Gaussian-response machinery. The ECM reference
+does not establish a generalized-response extension. There is no Python API.
+See [methods and status](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/articles/methods-status.Rmd) for the objectives,
+assumptions and limits.
 
-To get started, load the necessary packages:
+## Install the development version
 
+This README documents **0.1.0.9002**. With R ≥ 4.3.0 and a C++ compiler,
+install the checked development source from GitHub:
+
+```r
+install.packages("remotes")
+remotes::install_github(
+  "lapsumchan/drfarm@310b502a2eadc073e095bff02c141dbeabc56b73",
+  upgrade = "never"
+)
 ```
+
+The commit pins the source used for the local package checks and examples.
+For the recorded dependency versions, follow the source-checkout instructions
+in [Get started](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd). This development version has
+no CRAN release or new Zenodo release DOI.
+
+For the publicly available **historical 0.1.0** source only:
+
+```r
+install.packages("remotes")
+remotes::install_github("lapsumchan/drfarm@be6d52ee796161e732f398da5eadfc3d40812f34")
+```
+
+That historical install does **not** contain `max.iter`, the new diagnostics,
+the weighted option or `gaussian.ecm.reference()` shown in this candidate's help.
+See [installation and troubleshooting](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd).
+
+## Run the bundled example
+
+After installing this candidate, this quickstart uses the original bundled
+data: **500 participants, 10 predictors and 5 outcomes**. It fits a small remMap
+initialization grid and one historical DrFARM model with two factors.
+
+```r
 library(drfarm)
-library(glmnet)
-library(glasso)
-library(psych)
-```
-
-The lazy-loaded `drfarm.dat` contains
-- `X`: a `n` x `p` matrix of predictors (or variants)
-- `Y`: a `n` x `q` matrix of outcomes (or traits)
-- `Theta.t`: a `p` x `q` matrix of true (simulated) coefficients
-where `n = 500`, `p = 10` and `q = 5`
-
-```
+data("drfarm.dat", package = "drfarm")
 X <- drfarm.dat$X
 Y <- drfarm.dat$Y
-Theta.t <- drfarm.dat$Theta.t
+
+set.seed(20260909)
+initial <- remMap.whole(X, Y, n.lambda = 2)
+precision <- precM(X)
+fit <- DrFARM.one(
+  X, Y, initial$Theta0, precision, k = 2,
+  lambda1 = initial$lambda1.opt, lambda2 = initial$lambda2.opt,
+  standardize = TRUE, thres = 1e-4, max.iter = 1000
+)
+fit$diagnostics
+dim(fit$Theta)  # 5 outcomes × 10 predictors
 ```
 
-You can inspect it directly:
-```
-> t(Theta.t)
-     [,1] [,2]      [,3] [,4] [,5] [,6] [,7]     [,8] [,9]     [,10]
-[1,]    0    0 -4.383062    0    0    0    0 0.000000    0 -3.746484
-[2,]    0    0  1.556498    0    0    0    0 0.000000    0 -4.612953
-[3,]    0    0  0.000000    0    0    0    0 5.198627    0  0.000000
-[4,]    0    0 -1.654552    0    0    0    0 0.000000    0  4.947609
-[5,]    0    0  0.000000    0    0    0    0 1.166915    0  3.515037
-```
-which shows there are 3 "pleiotropic variants" (variant #3, #8 and #10).
+`Theta[r, j]` describes predictor j's association with outcome r on the
+**standardized scale**. By default, X and Y are centered and divided by their
+column sample standard deviations. Factor scores use the observed training
+outcomes; they are not predictions for new participants.
 
-To use DrFARM, we first obtain an initial sparse estimate (`Theta0`) using remMap<sup>[1]</sup>, which assumes standardization by default:
-```
-remMap.res <- remMap.whole(X, Y)
-Theta0 <- remMap.res$Theta0
+The recorded quickstart returns `loss_increase`, not convergence. The example
+is useful for learning the interface; its successful execution does not validate
+the fit for inference. [Get started](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/getting-started.Rmd) explains the
+status, scale conversion, downloadable scripts and full original demonstration.
 
-> Theta0
-     [,1] [,2]         [,3] [,4] [,5] [,6] [,7]       [,8] [,9]      [,10]
-[1,]    0    0 -0.208809944    0    0    0    0 0.00000000    0 -0.1635109
-[2,]    0    0  0.110882820    0    0    0    0 0.00000000    0 -0.2878153
-[3,]    0    0  0.005000023    0    0    0    0 0.23695892    0  0.0000000
-[4,]    0    0 -0.103653563    0    0    0    0 0.00000000    0  0.2709923
-[5,]    0    0  0.000000000    0    0    0    0 0.04195427    0  0.1935116
-```
-**Note: remMap estimates often differ from the true scale since it standardizes `X` and `Y` by default (likewise for DrFARM).**
-
-Next, we need to estimate the precision matrix for the design matrix `X`. By default, `precM` uses glasso, which our paper recommends for this purpose.
-```
-precM <- precM(X)
+```r
+source(system.file("examples", "quickstart.R", package = "drfarm"))
+help(package = "drfarm")
+?DrFARM.one
+citation("drfarm")
 ```
 
-With that, we have all the input needed for running DrFARM. We assume the number of latent factors (`k = 2`) is known, as used in generating the simulated data (For real data, you might determine `k` using exploratory graph analysis or other criteria).
-```
-k <- 2
-DrFARM.res <- DrFARM.whole(X, Y, Theta0, precM, k, 
-                           remMap.res$lambda1.opt, 
-                           remMap.res$lambda2.opt)
-Theta <- DrFARM.res$Theta;
-B <- DrFARM.res$B; 
-E.Z <- DrFARM.res$E.Z;
-```
+## Interpretation and limits
 
-Once we have the `q` x `p` DrFARM coefficient matrix `Theta`, `q` x `k` loading matrix and `n` x `k` expected latent factors, we can compute:
-1. Entrywise *p*-values for each variant-trait pair
-2. Pleiotropy (group-level) *p*-values for each variant across all traits
-```
-pval1 <- entry.pvalue(X, Y, Theta, B, E.Z, precM)
-pval2 <- pleio.pvalue(X, Y, Theta, B, E.Z, precM)
-```
+Use matching preprocessing, coefficient scale and predictor precision when
+fitting or evaluating inference. The original p-value routines are retained;
+the historical predictor combination uses a **two-sided Cauchy tail**, and an
+optional-kinship model-selection basis mismatch has been demonstrated. The
+quickstart uses `K = NULL`. Lower objective values are not a global-optimum or
+inferential guarantee. Read [methods and limitations](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/vignettes/articles/methods-status.Rmd)
+before a scientific analysis.
 
-# Output
-```
-pval1
-           [,1]       [,2]         [,3]      [,4]       [,5]      [,6]      [,7]         [,8]      [,9]        [,10]
-[1,] 0.74585396 0.87490709 4.194237e-19 0.3924213 0.07035777 0.3057141 0.3449264 6.824145e-01 0.6802427 6.335812e-13
-[2,] 0.07777188 0.54971679 2.629018e-07 0.7766920 0.64737382 0.1144596 0.7923100 5.357060e-01 0.5760429 5.770091e-26
-[3,] 0.83586036 0.14528803 1.145534e-01 0.4878057 0.89476283 0.3889823 0.2641217 3.884086e-25 0.5107359 3.232748e-01
-[4,] 0.71172948 0.09200038 1.539533e-07 0.9771724 0.28471456 0.8645441 0.2219014 1.185907e-01 0.6266486 7.943486e-35
-[5,] 0.49088373 0.07114813 7.201191e-01 0.3354013 0.00654572 0.1026620 0.9432392 1.154125e-02 0.5977810 4.135523e-51
+## Paper, archived code and software citation
 
-pval2
-[1] 9.344327e-01 3.852209e-01 4.194237e-18 2.163034e-01 6.287407e-02 5.328321e-01 5.538712e-01 3.884086e-24 7.970215e-01 4.135523e-50
-```
+**Method paper:** Chan, L. S., Li, G., Fauman, E. B., Yin, X., Laakso, M.,
+Boehnke, M. & Song, P. X. K. (2025). *DrFARM: identification of pleiotropic
+genetic variants in genome-wide association studies.* Nature Communications,
+16, 5789. [doi:10.1038/s41467-025-60439-4](https://doi.org/10.1038/s41467-025-60439-4).
 
-## Additional Notes
+**Historical code cited by the paper:** [DrFARM 0.1.0 on Zenodo](https://doi.org/10.5281/zenodo.15252156),
+archived from this repository's `0.1.0` release. It does not contain the newer
+development APIs documented here.
 
-### Fitting `remMap` with Helper Functions
+For a reproducible analysis, cite the method **and the exact software version**
+used. A paper's historical code archive and this evolving development candidate
+are different records. See the [citation and release policy](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/docs/CITING.md).
 
-The functions `remMap.one()` (and similarly `DrFARM.one()`) fit a single (`\lambda_1`,`\lambda_2`) pair. A typical workflow is:
+Package authors: **Lap Sum Chan, Gen Li and Peter X.K. Song**.
+Use `citation("drfarm")` to cite the installed software and version. The
+[citation record](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/inst/CITATION), [GPL ≥ 3 license and third-party notices](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/LICENSE.md),
+[changelog](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/NEWS.md), and [contribution guide](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/CONTRIBUTING.md) are included.
+Maintainer contact details are preserved in `DESCRIPTION`.
 
-1. **Generate a tuning grid**  
-   ```
-   # Suppose this yields 10 x 10 = 100 grid cells
-   remMap.lambda.grid <- remMap.grid(X, Y, standardize = TRUE)
-   ```
-2. **Fit a model for each grid cell**
-   ```
-   # Example using the i-th row of the grid:
-   i <- 36
-   Theta0.cand <- remMap.one(X, Y, lambda1 = remMap.lambda.grid[i,1], lambda2 = remMap.lambda.grid[i,2])
-   ```
-   In practice, you can loop over all grid rows (or use parallelization) to obtain 100 candidate solutions, each returning a `Theta0` matrix
-3. **Select the best candidate via EBIC**
-   ```
-   EBIC <- remMap.EBIC(X, Y, Theta0.cand, standardize = TRUE)
-   ```
-   By default, `remMap.EBIC` sets `gamma = 1`, encouraging stronger sparsity. If you prefer a standard BIC (less sparse solution), set `gamma = 0`:
-   ```
-   BIC <- remMap.EBIC(X, Y, Theta0.cand, gamma = 0, standardize = TRUE)
-   ```
-   In this toy example, `i = 36` gives the smallest EBIC, so we choose that corresponding `Theta0` as our final remMap estimate.
+For the optional documentation build and proposed Pages publication path, see
+[building the package website](https://github.com/lapsumchan/drfarm/blob/b77e589ed4a06888a787f57622842eed5d52b699/docs/WEBSITE.md).
 
-### Fitting `DrFARM` with Helper Functions
-
-After selecting the optimal `Theta0` from remMap (and corresponding (`lambda1.star` and `lambda2.star`), we can perform a similar procedure for DrFARM:
-
-1. **Obtain a precision matrix**
-   
-   DrFARM requires estimating the precision matrix of `X`. By default, the function `precM()` uses the graphical lasso (as recommended in our paper):
-   ```
-   precM <- precM(X, method = "glasso", standardize = TRUE)
-   ```
-2. **Generate a tuning grid**
-   
-   `DrFARM.grid()` build a 5 x 5 grid around the chosen lasso (`lambda1.star`) and group-lasso (`lambda2.star`) parameters from remMap. It also requires specifying the number of latent factors `k`:
-   ```
-   Theta0 <- Theta0.cand
-   lambda1.star <- remMap.lambda.grid[i,1]
-   lambda2.star <- remMap.lambda.grid[i,2]
-   
-   DrFARM.lambda.grid <- DrFARM.grid(X, Y, Theta0, precM, k = 2, lambda1.opt = lambda1.star, lambda2.opt = lambda2.star)
-3. **Fit a model for each grid cell**
-   ```
-   # Example with the i-th row of the grid:
-   i <- 22
-   DrFARM.one.res <- DrFARM.one(X, Y, Theta0, precM, k = 2, lambda1 = DrFARM.lambda.grid[i,1], lambda2 = DrFARM.lambda.grid[i,2])
-   ```
-4. **Select the best solution via EBIC**
-   ```
-   Theta <- DrFARM.one.res$Theta;
-   B <- DrFARM.one.res$B;
-   E.Z <- DrFARM.one.res$E.Z;
-   diag.Psi <- DrFARM.one.res$diag.Psi;
-
-   EBIC <- DrFARM.EBIC(X, Y, Theta, B, E.Z, diag.Psi)
-   ```
-   In this example, `i = 22` yields the smallest EBIC, so `Theta` here should be identical to that found by `DrFARM.whole()`.
-   
-### Special Case: (`lambda2 = 0`)
-In remMap, setting `lambda2 = 0` removes the group-lasso penalty and yields a pure multivariate lasso model. Below is a minimal example:
-```
-# Generate a 2D grid (100 x 100), but only keep the unique lambda1 values
-remMap.lambda.grid <- remMap.grid(X, Y, n.lambda = 100)
-lasso.grid <- sort(unique(remMap.lambda.grid[, 1]))
-
-# i = 63 yields the smallest EBIC
-i <- 63
-mlasso <- remMap.one(X, Y, lambda1 = lasso.grid[i], lambda2 = 0)
-```
-A similar approach works for `DrFARM.one()` if you wish to consider a lasso-only penalty in the DrFARM setting as well.
-
-### Choosing the Number of Latent Factors
-Below is a minimal example illustrating how to use Exploratory Graph Analysis (EGA) via the `EGAnet` package (approach used in our paper) to guide factor selection:
-```
-# If not already installed:
-# install.packages("EGAnet")
-library(EGAnet)
-
-# Note: Our DrFARM-related functions typically work on standardized data
-#       (Coefficients are in the standardized scale, even if your original X/Y are unscaled)
-X.std <- scale(X)
-Y.std <- scale(Y)
-
-n <- dim(Y.std)[1]
-
-# Suppose we already have a converged DrFARM solution 'Theta' (q x p) and precM (p x p).
-# Debias 'Theta' to get 'Theta.db.t'
-Theta.t <- t(Theta)  # p x q
-Theta.db.t <- Theta.t + (precM %*% crossprod(X.std, (Y.std - X.std %*% Theta.t))) / n
-
-# Residual matrix E.star
-E.star <- Y.std - X.std %*% Theta.db.t
-
-# Run EGA
-ega.res <- EGA(E.star, plot.EGA = FALSE)
-
-# Check the recommended factor count
-print(ega.res$n.dim)
-[1] 2
-```
-Here, we used the converged DrFARM estimate (i.e., a final solution after fixing `k`), which is more confirmatory. In practice, you can run the same procedure with an initial `Theta0` (e.g., from `remMap`) to get a preliminary sense of `k`, especially if you haven't yet settled on a final DrFARM fit. Depending on your data and goals, other approaches (e.g., parallel analysis in `psych`, domain knowledge) can also guide factor selection.
-
-# Citation
-
-If you find `drfarm` useful, please cite:
-> Chan, Lap Sum, et al. "DrFARM: Identification and inference for pleiotropic gene in GWAS." bioRxiv (2022): 2022-11.
+*Latent factors. Explicit assumptions.*
